@@ -43,3 +43,7 @@ app-example
 /android
 
 # /src
+
+@holaimabids-organization__compstudy.jks
+credentials.json
+.gitignore

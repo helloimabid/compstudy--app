@@ -1,5 +1,5 @@
 import { account, COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
-import * as Linking from "expo-linking";
+import { makeRedirectUri } from 'expo-auth-session';
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
@@ -118,48 +118,58 @@ export function AppwriteProvider({ children }: { children: ReactNode }) {
 
     const loginWithGoogle = async () => {
         try {
-            // Updated implementation based on guide: verify if redirectPath parameter is needed
-            // Defaulting to root "/"
-            const redirectUri = Linking.createURL("/");
+            // Create deep link that works across Expo environments
+            // Ensure localhost is used for the hostname to validation error for success/failure URLs
+            const deepLink = new URL(makeRedirectUri({ preferLocalhost: true }));
+            const scheme = `${deepLink.protocol}//`; // e.g. 'exp://' or 'appwrite-callback-<PROJECT_ID>://'
 
-            console.log("Redirect URI:", redirectUri);
+            console.log("Deep link:", deepLink.toString());
+            console.log("Scheme:", scheme);
 
-            const response = await account.createOAuth2Token(
-                OAuthProvider.Google,
-                redirectUri,
-                redirectUri
-            );
+            // Start OAuth flow
+            const loginUrl = await account.createOAuth2Token({
+                provider: OAuthProvider.Google,
+                success: deepLink.toString(),
+                failure: deepLink.toString(),
+            });
 
-            if (!response) {
-                console.error("No OAuth URL returned from Appwrite");
-                return;
+            if (!loginUrl) {
+                throw new Error("Failed to generate OAuth login URL");
             }
 
-            const result = await WebBrowser.openAuthSessionAsync(
-                response.toString(),
-                redirectUri
-            );
+            console.log("Login URL:", loginUrl);
+
+            // Open loginUrl and listen for the scheme redirect
+            const result = await WebBrowser.openAuthSessionAsync(loginUrl.toString(), scheme);
 
             if (result.type === "success" && result.url) {
                 const url = new URL(result.url);
                 const secret = url.searchParams.get("secret");
                 const userId = url.searchParams.get("userId");
 
-                if (secret && userId) {
-                    await account.createSession(userId, secret);
-                    await checkUser();
+                console.log("OAuth success - userId:", userId, "secret present:", !!secret);
 
-                    // Add platform specific redirect handling if needed, but router.replace works well generally in Expo Router
+                if (secret && userId) {
+                    // Create session with OAuth credentials
+                    await account.createSession({
+                        userId,
+                        secret
+                    });
+                    
+                    await checkUser();
                     router.replace("/(tabs)");
                 } else {
-                    throw new Error("Failed to extract session details");
+                    throw new Error("Failed to extract OAuth credentials from redirect");
                 }
             } else if (result.type === "cancel") {
                 console.log("User cancelled Google login");
+            } else {
+                console.error("OAuth result type:", result.type);
             }
 
         } catch (error: any) {
             console.error("Google OAuth error:", error);
+            throw error;
         }
     };
 
