@@ -247,7 +247,10 @@ export default function RoomsScreen() {
                                 <TouchableOpacity
                                     key={room.$id}
                                     style={styles.card}
-                                    onPress={() => router.push(`/room/${room.roomId}`)}
+                                    onPress={() => router.push({
+                                        pathname: "/rooms/[roomId]",
+                                        params: { roomId: room.roomId }
+                                    })}
                                 >
                                     <View style={styles.roomHeader}>
                                         <View style={styles.roomIcon}>

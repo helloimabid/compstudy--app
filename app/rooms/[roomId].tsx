@@ -128,7 +128,7 @@ export default function RoomScreen() {
                 ws.send(JSON.stringify(presenceMessage));
             };
 
-            ws.onmessage = (event) => {
+            ws.onmessage = (event: any) => {
                 try {
                     const msg = JSON.parse(event.data);
                     if (msg.type === "chat") {
@@ -209,15 +209,15 @@ export default function RoomScreen() {
         // Subscribe to room changes
         const unsubscribe = databases.client.subscribe(
             `databases.${DB_ID}.collections.${COLLECTIONS.ROOMS}.documents`,
-            (response) => {
-                if (response.events.some(e => e.includes("update"))) {
+            (response: any) => {
+                if (response.events.some((e: string) => e.includes("update"))) {
                     const updatedRoom = response.payload as unknown as Room;
                     if (updatedRoom.roomId === roomId) {
                         serverOffsetMsRef.current = estimateServerOffsetMs(updatedRoom);
                         setRoom(updatedRoom);
                     }
                 }
-                if (response.events.some(e => e.includes("delete"))) {
+                if (response.events.some((e: string) => e.includes("delete"))) {
                     const deletedDoc = response.payload as any;
                     if (room && deletedDoc.$id === room.$id) {
                         router.replace("/rooms/start");

@@ -21,7 +21,10 @@ export default function StartStudyingScreen() {
 
     const handleJoinRoom = () => {
         if (roomCode.trim()) {
-            router.push(`/room/${roomCode.trim()}`);
+            router.push({
+                pathname: "/rooms/[roomId]",
+                params: { roomId: roomCode.trim() }
+            });
         }
     };
 

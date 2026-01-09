@@ -287,7 +287,10 @@ export default function HomeScreen() {
           {/* Active Room Card */}
           {activeRoom && (
             <TouchableOpacity
-              onPress={() => router.push(`/room/${activeRoom.roomId}`)}
+              onPress={() => router.push({
+                pathname: "/rooms/[roomId]",
+                params: { roomId: activeRoom.roomId }
+              })}
               activeOpacity={0.9}
             >
               <LinearGradient

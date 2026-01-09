@@ -117,7 +117,10 @@ export default function CreateRoomScreen() {
                 ]
             );
 
-            router.replace(`/room/${finalRoomId}`);
+            router.replace({
+                pathname: "/rooms/[roomId]",
+                params: { roomId: finalRoomId }
+            });
         } catch (error) {
             console.error("Failed to create room:", error);
             Alert.alert("Error", "Failed to create room. Please try again.");
@@ -152,7 +155,10 @@ export default function CreateRoomScreen() {
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
-                        onPress={() => router.replace(`/room/${existingRoomId}`)}
+                        onPress={() => router.replace({
+                            pathname: "/rooms/[roomId]",
+                            params: { roomId: existingRoomId }
+                        })}
                     >
                         <Text style={styles.buttonText}>Enter Your Room</Text>
                         <ArrowRight size={20} color="#000" />
