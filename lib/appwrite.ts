@@ -1,4 +1,4 @@
-import { Account, Client, Databases, Storage } from 'react-native-appwrite';
+import { Account, Client, Databases, ID, Permission, Query, Role, Storage } from 'react-native-appwrite';
 import 'react-native-url-polyfill/auto';
 
 const client = new Client();
@@ -14,7 +14,7 @@ client
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
-export { client };
+export { client, ID, Permission, Query, Role };
 
 export const DB_ID = 'compstudy-db';
 export const BUCKET_ID = 'profile-pictures';

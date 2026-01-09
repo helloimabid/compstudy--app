@@ -118,7 +118,7 @@ export default function CreateRoomScreen() {
             );
 
             router.replace({
-                pathname: "/rooms/[roomId]",
+                pathname: "/room/[roomId]",
                 params: { roomId: finalRoomId }
             });
         } catch (error) {
@@ -156,7 +156,7 @@ export default function CreateRoomScreen() {
                     <TouchableOpacity
                         style={styles.primaryButton}
                         onPress={() => router.replace({
-                            pathname: "/rooms/[roomId]",
+                            pathname: "/room/[roomId]",
                             params: { roomId: existingRoomId }
                         })}
                     >

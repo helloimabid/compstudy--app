@@ -49,6 +49,8 @@ interface TimerSettingsProps {
     targetDuration: number;
     setTargetDuration: (duration: number) => void;
     applyPreset: (focus: number) => void;
+    timerMode: "timer" | "stopwatch";
+    setTimerMode: (mode: "timer" | "stopwatch") => void;
 }
 
 const THEMES: { id: ThemeColor; name: string; color: string }[] = [
@@ -86,6 +88,8 @@ export default function TimerSettings({
     targetDuration,
     setTargetDuration,
     applyPreset,
+    timerMode,
+    setTimerMode,
 }: TimerSettingsProps) {
     // Helper to parse duration into hours, minutes, seconds
     const hours = Math.floor(targetDuration / 3600);
@@ -160,6 +164,31 @@ export default function TimerSettings({
                                         <Text style={[
                                             styles.segmentText,
                                             visualMode === m && styles.segmentTextActive
+                                        ]}>{m}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        {/* Timer Mode */}
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Clock size={16} color={Colors.dark.textMuted} />
+                                <Text style={styles.sectionTitle}>Timer Mode</Text>
+                            </View>
+                            <View style={styles.segmentControl}>
+                                {(["timer", "stopwatch"] as const).map((m) => (
+                                    <TouchableOpacity
+                                        key={m}
+                                        onPress={() => setTimerMode(m)}
+                                        style={[
+                                            styles.segmentButton,
+                                            timerMode === m && styles.segmentButtonActive
+                                        ]}
+                                    >
+                                        <Text style={[
+                                            styles.segmentText,
+                                            timerMode === m && styles.segmentTextActive
                                         ]}>{m}</Text>
                                     </TouchableOpacity>
                                 ))}

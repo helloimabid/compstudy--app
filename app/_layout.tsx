@@ -24,7 +24,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="profile/[userId]" options={{ headerShown: false }} />
-          <Stack.Screen name="rooms/[roomId]" options={{ headerShown: false }} />
+          <Stack.Screen name="room" options={{ headerShown: false }} />
           <Stack.Screen name="blog/index" options={{ headerShown: false }} />
           <Stack.Screen name="blog/[slug]" options={{ headerShown: false }} />
         </Stack>

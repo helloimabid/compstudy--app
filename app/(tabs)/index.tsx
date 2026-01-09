@@ -288,7 +288,7 @@ export default function HomeScreen() {
           {activeRoom && (
             <TouchableOpacity
               onPress={() => router.push({
-                pathname: "/rooms/[roomId]",
+                pathname: "/room/[roomId]",
                 params: { roomId: activeRoom.roomId }
               })}
               activeOpacity={0.9}
@@ -335,7 +335,7 @@ export default function HomeScreen() {
         <View style={styles.gridSection}>
           {/* Start Studying Together - IMPORTANT/NEW */}
           <TouchableOpacity
-            onPress={() => router.push("/rooms/start")}
+            onPress={() => router.push("/room/start")}
             activeOpacity={0.9}
           >
             <LinearGradient

@@ -138,7 +138,7 @@ export default function RoomsScreen() {
                     </View>
                     <TouchableOpacity
                         style={styles.hostBtn}
-                        onPress={() => router.push("/rooms/start")}
+                        onPress={() => router.push("/room/start")}
                     >
                         <Plus size={18} color="#000" />
                         <Text style={styles.hostBtnText}>Host / Join</Text>
@@ -248,7 +248,7 @@ export default function RoomsScreen() {
                                     key={room.$id}
                                     style={styles.card}
                                     onPress={() => router.push({
-                                        pathname: "/rooms/[roomId]",
+                                        pathname: "/room/[roomId]",
                                         params: { roomId: room.roomId }
                                     })}
                                 >

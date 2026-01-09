@@ -2,7 +2,7 @@ import { CustomDrawerContent } from "@/components/CustomDrawer";
 import { Colors } from "@/constants/Colors";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { Drawer } from "expo-router/drawer";
-import { Book, Clock, DoorOpen, Home, Menu, Trophy } from "lucide-react-native";
+import { Book, Clock, DoorOpen, Heart, Home, Menu, Trophy } from "lucide-react-native";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -88,6 +88,14 @@ export default function DrawerLayout() {
                         drawerLabel: "My Subjects",
                         title: "My Subjects",
                         drawerIcon: ({ color, size }) => <Book size={size} color={color} />,
+                    }}
+                />
+                <Drawer.Screen
+                    name="support"
+                    options={{
+                        drawerLabel: "Support Us",
+                        title: "Support",
+                        drawerIcon: ({ color, size }) => <Heart size={size} color={color} />,
                     }}
                 />
                 <Drawer.Screen

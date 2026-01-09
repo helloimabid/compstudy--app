@@ -65,10 +65,13 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
+      "router": {
+        "root": "./app"
+      },
       "eas": {
-        "projectId": "cc2386d6-9888-41ec-84c6-24066414d5a1"
+        "projectId": "b8a1785f-2be9-4b89-bb99-85d4d12e5557"
       }
-    }
+    },
+    "owner": "holaimabids-organization"
   }
 }

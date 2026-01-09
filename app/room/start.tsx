@@ -22,7 +22,7 @@ export default function StartStudyingScreen() {
     const handleJoinRoom = () => {
         if (roomCode.trim()) {
             router.push({
-                pathname: "/rooms/[roomId]",
+                pathname: "/room/[roomId]",
                 params: { roomId: roomCode.trim() }
             });
         }
@@ -102,7 +102,7 @@ export default function StartStudyingScreen() {
                         {/* Create Room */}
                         <TouchableOpacity
                             style={styles.bentoSmall}
-                            onPress={() => router.push("/rooms/create")}
+                            onPress={() => router.push("/room/create")}
                         >
                             <View style={[styles.iconBox, { backgroundColor: "rgba(168, 85, 247, 0.2)" }]}>
                                 <Plus size={20} color="#a855f7" />

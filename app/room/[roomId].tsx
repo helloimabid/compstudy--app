@@ -1,7 +1,7 @@
 import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
 import { BUCKET_ID, COLLECTIONS, databases, DB_ID, storage } from "@/lib/appwrite";
-import * as ExpoClipboard from "expo-clipboard";
+import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -220,7 +220,7 @@ export default function RoomScreen() {
                 if (response.events.some((e: string) => e.includes("delete"))) {
                     const deletedDoc = response.payload as any;
                     if (room && deletedDoc.$id === room.$id) {
-                        router.replace("/rooms/start");
+                        router.replace("/room/start");
                     }
                 }
             }
@@ -302,7 +302,7 @@ export default function RoomScreen() {
                 try {
                     const participantDocs = await databases.listDocuments(DB_ID, COLLECTIONS.ROOM_PARTICIPANTS, [
                         Query.equal("roomId", roomId),
-                        Query.equal("userId", user.$id)
+                        Query.equal("userId", user?.$id || "")
                     ]);
                     for (const doc of participantDocs.documents) {
                         try {
@@ -463,7 +463,7 @@ export default function RoomScreen() {
                                 await databases.deleteDocument(DB_ID, COLLECTIONS.ROOM_PARTICIPANTS, doc.$id);
                             }
                             await databases.deleteDocument(DB_ID, COLLECTIONS.ROOMS, room.$id);
-                            router.replace("/rooms/start");
+                            router.replace("/room/start");
                         } catch (e) {
                             Alert.alert("Error", "Failed to delete room");
                         }
@@ -484,7 +484,7 @@ export default function RoomScreen() {
                             if (pDocs.documents.length > 0) {
                                 await databases.deleteDocument(DB_ID, COLLECTIONS.ROOM_PARTICIPANTS, pDocs.documents[0].$id);
                             }
-                            router.replace("/rooms/start");
+                            router.replace("/room/start");
                         } catch (e) {
                             Alert.alert("Error", "Failed to leave");
                         }
@@ -558,7 +558,7 @@ export default function RoomScreen() {
 
     const copyJoinCode = async () => {
         if (!room) return;
-        await ExpoClipboard.setStringAsync(room.roomId);
+        await Clipboard.setStringAsync(room.roomId);
         Alert.alert("Success", "Join code copied to clipboard!");
     };
 

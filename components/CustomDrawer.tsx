@@ -15,6 +15,7 @@ import {
     Clock,
     DoorOpen,
     FileText,
+    Heart,
     Home,
     LogOut,
     Trophy,
@@ -88,6 +89,14 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                             <Text style={styles.extraLinkText}>My Profile</Text>
                         </TouchableOpacity>
                     )}
+
+                    <TouchableOpacity
+                        style={styles.extraLink}
+                        onPress={() => router.push("/support")}
+                    >
+                        <Heart size={20} color={Colors.dark.textMuted} />
+                        <Text style={styles.extraLinkText}>Support CompStudy</Text>
+                    </TouchableOpacity>
                 </View>
             </DrawerContentScrollView>
 
