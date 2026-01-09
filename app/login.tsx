@@ -1,5 +1,5 @@
+import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
-import { useAuth } from "@/context/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";

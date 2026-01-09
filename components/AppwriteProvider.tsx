@@ -1,12 +1,9 @@
 import { account, COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
-import { makeRedirectUri } from "expo-auth-session";
+import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { ID, Models, OAuthProvider, Permission, Query, Role } from "react-native-appwrite";
-
-// Ensure web browser environment is ready
-WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextType {
     user: Models.User<Models.Preferences> | null;
@@ -21,14 +18,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AppwriteProvider");
+    }
+    return context;
+}
+
+export function AppwriteProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        checkUser();
+        init();
     }, []);
+
+    const init = async () => {
+        await checkUser();
+    };
 
     const checkUser = async () => {
         try {
@@ -47,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setProfile(profiles.documents[0]);
                 } else if (session.name && !session.name.includes("@")) {
                     // Create profile if missing but user has a name (e.g. from OAuth)
-                    // Note: Ideally we prompt for a username if it's auto-generated
                     await createProfile(session.$id, session.name, session.email);
 
                     // Re-fetch profile
@@ -93,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Error creating profile:", error);
         }
-    }
+    };
 
     const login = async (email: string, password: string) => {
         try {
@@ -110,25 +118,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const loginWithGoogle = async () => {
         try {
-            const redirectUri = makeRedirectUri({
-                scheme: "compstudy",
-            });
+            // Updated implementation based on guide: verify if redirectPath parameter is needed
+            // Defaulting to root "/"
+            const redirectUri = Linking.createURL("/");
 
-            // Use SDK's createOAuth2Token to generate the URL with the correct platform signature
-            // Using object syntax as per official docs
-            const url = await account.createOAuth2Token({
-                provider: OAuthProvider.Google,
-                success: redirectUri,
-                failure: redirectUri,
-            });
+            console.log("Redirect URI:", redirectUri);
 
-            if (!url) {
-                throw new Error("Failed to create OAuth token");
+            const response = await account.createOAuth2Token(
+                OAuthProvider.Google,
+                redirectUri,
+                redirectUri
+            );
+
+            if (!response) {
+                console.error("No OAuth URL returned from Appwrite");
+                return;
             }
 
-            // Open the browser session
             const result = await WebBrowser.openAuthSessionAsync(
-                url.toString(),
+                response.toString(),
                 redirectUri
             );
 
@@ -140,14 +148,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (secret && userId) {
                     await account.createSession(userId, secret);
                     await checkUser();
+
+                    // Add platform specific redirect handling if needed, but router.replace works well generally in Expo Router
                     router.replace("/(tabs)");
                 } else {
                     throw new Error("Failed to extract session details");
                 }
+            } else if (result.type === "cancel") {
+                console.log("User cancelled Google login");
             }
+
         } catch (error: any) {
             console.error("Google OAuth error:", error);
-            throw error;
         }
     };
 
@@ -215,12 +227,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
 }

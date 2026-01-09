@@ -1,5 +1,5 @@
+import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
-import { useAuth } from "@/context/AuthContext";
 import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -15,6 +15,7 @@ import {
   Sparkles,
   TrendingUp,
   Trophy,
+  Users,
   Zap
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -286,7 +287,7 @@ export default function HomeScreen() {
           {/* Active Room Card */}
           {activeRoom && (
             <TouchableOpacity
-              onPress={() => router.push(`/(tabs)/rooms`)} // Ideally deep link to room
+              onPress={() => router.push(`/room/${activeRoom.roomId}`)}
               activeOpacity={0.9}
             >
               <LinearGradient
@@ -329,24 +330,52 @@ export default function HomeScreen() {
 
         {/* Action Cards - Section 3 */}
         <View style={styles.gridSection}>
+          {/* Start Studying Together - IMPORTANT/NEW */}
+          <TouchableOpacity
+            onPress={() => router.push("/rooms/start")}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={["rgba(99, 102, 241, 0.2)", "rgba(168, 85, 247, 0.2)"]}
+              style={[styles.actionCard, { borderColor: "rgba(99, 102, 241, 0.4)" }]}
+            >
+              <View style={[styles.iconBox, styles.iconBoxLarge, { backgroundColor: "rgba(99, 102, 241, 0.3)" }]}>
+                <Users size={24} color="#818cf8" />
+              </View>
+              <View style={styles.actionContent}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text style={styles.actionTitle}>Start Studying Together</Text>
+                  <View style={styles.newBadge}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                </View>
+                <Text style={styles.actionSubtitle}>Host or join a collaborative room</Text>
+                <View style={[styles.linkRow, { marginTop: 4 }]}>
+                  <Text style={[styles.linkText, { color: "#818cf8" }]}>Enter Hub</Text>
+                  <ArrowRight size={14} color="#818cf8" />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
           {/* Start Studying Solo */}
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/timer")}
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={["rgba(99, 102, 241, 0.15)", "rgba(168, 85, 247, 0.15)"]}
+              colors={["rgba(34, 197, 94, 0.15)", "rgba(16, 185, 129, 0.15)"]}
               style={styles.actionCard}
             >
-              <View style={[styles.iconBox, styles.iconBoxLarge, styles.focusIconBox]}>
-                <BookOpen size={24} color="#818cf8" />
+              <View style={[styles.iconBox, styles.iconBoxLarge, { backgroundColor: "rgba(34, 197, 94, 0.2)" }]}>
+                <Clock size={24} color="#4ade80" />
               </View>
               <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Start Studying Solo</Text>
-                <Text style={styles.actionSubtitle}>Begin a new focus session</Text>
+                <Text style={styles.actionTitle}>Solo Focus Timer</Text>
+                <Text style={styles.actionSubtitle}>Begin a personal focus session</Text>
                 <View style={[styles.linkRow, { marginTop: 4 }]}>
-                  <Text style={[styles.linkText, { color: "#818cf8" }]}>Let's go</Text>
-                  <ArrowRight size={14} color="#818cf8" />
+                  <Text style={[styles.linkText, { color: "#4ade80" }]}>Start Focus</Text>
+                  <ArrowRight size={14} color="#4ade80" />
                 </View>
               </View>
             </LinearGradient>
@@ -628,6 +657,18 @@ const styles = StyleSheet.create({
   liveIconBox: { backgroundColor: "rgba(34, 197, 94, 0.2)" },
 
   // Typography & Labels
+  newBadge: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: "800",
+  },
   cardLabel: {
     fontSize: 10,
     fontWeight: "600",

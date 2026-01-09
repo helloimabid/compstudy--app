@@ -1,6 +1,7 @@
 import { Colors } from "@/constants/Colors";
+import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Brain, Coffee, Pause, Play, RotateCcw } from "lucide-react-native";
+import { Brain, CalendarDays, Coffee, Pause, Play, RotateCcw, Settings } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
     AppState,
@@ -9,39 +10,120 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { ID, Permission, Role } from "react-native-appwrite";
+import { useAuth } from "./AppwriteProvider";
+import SessionDesigner from "./SessionDesigner";
+import { CircularTimerDisplay, DigitalTimerDisplay, MinimalTimerDisplay } from "./TimerDisplays";
+import TimerSettings, { ThemeColor, TimerFont, TimerStyle, VisualMode } from "./TimerSettings";
 
 export default function NativeStudyTimer() {
+    const { user, profile } = useAuth();
+
+    // Timer State
     const [isActive, setIsActive] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [elapsed, setElapsed] = useState(0);
     const [duration, setDuration] = useState(25 * 60); // Default 25 min
     const [mode, setMode] = useState<"focus" | "break">("focus");
 
+    // IDs for database tracking
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
+
+    // Settings State
+    const [showSettings, setShowSettings] = useState(false);
+    const [showDesigner, setShowDesigner] = useState(false);
+    const [themeColor, setThemeColor] = useState<ThemeColor>("indigo");
+    const [soundEnabled, setSoundEnabled] = useState(true);
+    const [visualMode, setVisualMode] = useState<VisualMode>("grid");
+    const [timerStyle, setTimerStyle] = useState<TimerStyle>("grid");
+    const [timerFont, setTimerFont] = useState<TimerFont>("default");
+    const [autoStartFocus, setAutoStartFocus] = useState(false);
+    const [autoStartBreak, setAutoStartBreak] = useState(false);
+    const [targetDuration, setTargetDuration] = useState(25 * 60);
+
     const startTimeRef = useRef<number | null>(null);
     const appState = useRef(AppState.currentState);
 
+    // Load Settings
     useEffect(() => {
-        // Restore state from storage
+        const loadSettings = async () => {
+            try {
+                const saved = await AsyncStorage.getItem("studyTimerSettings");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.themeColor) setThemeColor(parsed.themeColor);
+                    if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
+                    if (parsed.visualMode) setVisualMode(parsed.visualMode);
+                    if (parsed.timerStyle) setTimerStyle(parsed.timerStyle);
+                    if (parsed.timerFont) setTimerFont(parsed.timerFont);
+                    if (parsed.autoStartFocus !== undefined) setAutoStartFocus(parsed.autoStartFocus);
+                    if (parsed.autoStartBreak !== undefined) setAutoStartBreak(parsed.autoStartBreak);
+                    if (parsed.targetDuration) setTargetDuration(parsed.targetDuration);
+                }
+            } catch (e) {
+                console.error("Failed to load settings", e);
+            }
+        };
+        loadSettings();
+    }, []);
+
+    // Save Settings
+    useEffect(() => {
+        const saveSettings = async () => {
+            try {
+                await AsyncStorage.setItem("studyTimerSettings", JSON.stringify({
+                    themeColor,
+                    soundEnabled,
+                    visualMode,
+                    timerStyle,
+                    timerFont,
+                    autoStartFocus,
+                    autoStartBreak,
+                    targetDuration
+                }));
+            } catch (e) {
+                console.error("Failed to save settings", e);
+            }
+        };
+        saveSettings();
+
+        // Sync duration with targetDuration if timer is idle
+        if (!isActive && elapsed === 0 && mode === "focus") {
+            setDuration(targetDuration);
+        }
+    }, [themeColor, soundEnabled, visualMode, timerStyle, timerFont, autoStartFocus, autoStartBreak, targetDuration, isActive, elapsed, mode]);
+
+    // Restore Timer State
+    useEffect(() => {
         const loadState = async () => {
             try {
                 const savedState = await AsyncStorage.getItem("timerState");
                 if (savedState) {
                     const parsed = JSON.parse(savedState);
-                    setDuration(parsed.duration || 25 * 60);
-                    setMode(parsed.mode || "focus");
-                    if (parsed.isActive && !parsed.isPaused) {
-                        // Calculate elapsed time properly using timestamp
-                        const now = Date.now();
-                        const savedAt = parsed.savedAt || now;
-                        const extraElapsed = Math.floor((now - savedAt) / 1000);
-                        setElapsed((parsed.elapsed || 0) + extraElapsed);
-                        setIsActive(true);
-                        setIsPaused(false);
-                        startTimeRef.current = now - ((parsed.elapsed || 0) + extraElapsed) * 1000;
-                    } else {
-                        setElapsed(parsed.elapsed || 0);
-                        setIsActive(parsed.isActive);
-                        setIsPaused(parsed.isPaused);
+
+                    // Only restore if user matches (or anonymous)
+                    if (!user || (parsed.userId === user.$id)) {
+                        setDuration(parsed.duration || 25 * 60);
+                        setMode(parsed.mode || "focus");
+                        setSessionId(parsed.sessionId || null);
+                        setLiveSessionId(parsed.liveSessionId || null);
+
+                        if (parsed.isActive && !parsed.isPaused) {
+                            const now = Date.now();
+                            const savedAt = parsed.savedAt || now;
+                            const extraElapsed = Math.floor((now - savedAt) / 1000);
+                            const totalElapsed = (parsed.elapsed || 0) + extraElapsed;
+
+                            setElapsed(totalElapsed);
+                            setIsActive(true);
+                            setIsPaused(false);
+                            startTimeRef.current = now - totalElapsed * 1000;
+                        } else {
+                            setElapsed(parsed.elapsed || 0);
+                            setIsActive(parsed.isActive);
+                            setIsPaused(parsed.isPaused);
+                        }
                     }
                 }
             } catch (e) {
@@ -49,29 +131,38 @@ export default function NativeStudyTimer() {
             }
         };
         loadState();
-    }, []);
+    }, [user]);
 
+    // Save Timer State
     useEffect(() => {
         const saveState = async () => {
             try {
-                await AsyncStorage.setItem(
-                    "timerState",
-                    JSON.stringify({
-                        isActive,
-                        isPaused,
-                        elapsed,
-                        duration,
-                        mode,
-                        savedAt: Date.now(),
-                    })
-                );
+                if (isActive || elapsed > 0) {
+                    await AsyncStorage.setItem(
+                        "timerState",
+                        JSON.stringify({
+                            userId: user?.$id,
+                            isActive,
+                            isPaused,
+                            elapsed,
+                            duration,
+                            mode,
+                            sessionId,
+                            liveSessionId,
+                            savedAt: Date.now(),
+                        })
+                    );
+                } else {
+                    await AsyncStorage.removeItem("timerState");
+                }
             } catch (e) {
                 console.error("Failed to save timer state", e);
             }
         };
         saveState();
-    }, [isActive, isPaused, elapsed, duration, mode]);
+    }, [isActive, isPaused, elapsed, duration, mode, sessionId, liveSessionId, user]);
 
+    // Timer Interval
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;
 
@@ -83,23 +174,81 @@ export default function NativeStudyTimer() {
             interval = setInterval(() => {
                 const now = Date.now();
                 const newElapsed = Math.floor((now - startTimeRef.current!) / 1000);
-                setElapsed(newElapsed);
+
+                // Check if timer finished
+                if (mode === "focus" && newElapsed >= duration && duration > 0) {
+                    // Timer complete
+                    handleComplete();
+                } else if (mode === "break" && newElapsed >= duration && duration > 0) {
+                    handleComplete();
+                } else {
+                    setElapsed(newElapsed);
+                }
             }, 1000);
         } else {
             startTimeRef.current = null;
         }
 
         return () => clearInterval(interval);
-    }, [isActive, isPaused]);
+    }, [isActive, isPaused, duration, mode]);
 
+    const handleComplete = async () => {
+        setIsActive(false);
+        setIsPaused(false);
+        setElapsed(duration); // Clamp to duration
+
+        // Logic to switch modes automatically
+        if (mode === "focus") {
+            if (autoStartBreak) {
+                setTimeout(() => switchMode("break"), 1500);
+            }
+        } else {
+            if (autoStartFocus) {
+                setTimeout(() => switchMode("focus"), 1500);
+            }
+        }
+
+        // Cleanup sessions
+        if (liveSessionId) {
+            await updateLiveSession(liveSessionId, { status: "completed", elapsedTime: duration });
+            // Optionally delete live session or keep it as completed
+            deleteLiveSession(liveSessionId);
+            setLiveSessionId(null);
+        }
+
+        if (sessionId) {
+            await databases.updateDocument(DB_ID, COLLECTIONS.STUDY_SESSIONS, sessionId, {
+                status: "completed",
+                duration: duration
+            }).catch(e => console.log("Failed to complete session", e));
+            setSessionId(null);
+        }
+    };
+
+    // AppState handling (Background/Foreground)
     useEffect(() => {
-        const subscription = AppState.addEventListener("change", nextAppState => {
+        const subscription = AppState.addEventListener("change", async nextAppState => {
             if (
                 appState.current.match(/inactive|background/) &&
                 nextAppState === "active"
             ) {
                 if (isActive && !isPaused) {
-                    // Refresh logic if needed, but the interval and saveState logic should handle it
+                    const now = Date.now();
+                    const saved = await AsyncStorage.getItem("timerState");
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        const savedAt = parsed.savedAt || now;
+                        const extraElapsed = Math.floor((now - savedAt) / 1000);
+                        const newElapsed = (parsed.elapsed || 0) + extraElapsed;
+
+                        setElapsed(newElapsed);
+                        startTimeRef.current = now - newElapsed * 1000;
+
+                        // Sync with Appwrite immediately on resume
+                        if (liveSessionId) {
+                            updateLiveSession(liveSessionId, { elapsedTime: newElapsed, status: "active" });
+                        }
+                    }
                 }
             }
             appState.current = nextAppState;
@@ -108,80 +257,331 @@ export default function NativeStudyTimer() {
         return () => {
             subscription.remove();
         };
-    }, [isActive, isPaused]);
+    }, [isActive, isPaused, liveSessionId]);
 
-    const toggleTimer = () => {
-        if (!isActive) {
-            setIsActive(true);
-            setIsPaused(false);
-        } else {
-            setIsPaused(!isPaused);
-            startTimeRef.current = null; // Reset ref so it recalculates on resume
+    // DB Operations
+    const createLiveSession = async (sessionData: { subject: string; goal: string; duration?: number }) => {
+        if (!user) return null;
+        try {
+            const liveSession = await databases.createDocument(
+                DB_ID,
+                COLLECTIONS.LIVE_SESSIONS,
+                ID.unique(),
+                {
+                    userId: user.$id,
+                    username: profile?.username || user.name || "Anonymous",
+                    subject: sessionData.subject || "Focus Session",
+                    goal: sessionData.goal || "",
+                    startTime: new Date().toISOString(),
+                    lastUpdateTime: new Date().toISOString(),
+                    status: "active",
+                    sessionType: mode,
+                    duration: sessionData.duration || null,
+                    elapsedTime: 0,
+                    isPublic: true, // Default to public
+                    profilePicture: profile?.profilePicture || null,
+                    streak: profile?.streak || 0,
+                    totalHours: profile?.totalHours || 0,
+                },
+                [
+                    Permission.read(Role.any()),
+                    Permission.update(Role.user(user.$id)),
+                    Permission.delete(Role.user(user.$id)),
+                ]
+            );
+            return liveSession.$id;
+        } catch (e) {
+            console.error("Failed to create live session", e);
+            return null;
         }
     };
 
-    const resetTimer = () => {
+    const updateLiveSession = async (liveId: string, updates: { status?: "active" | "paused" | "completed"; elapsedTime?: number }) => {
+        if (!liveId) return;
+        try {
+            await databases.updateDocument(DB_ID, COLLECTIONS.LIVE_SESSIONS, liveId, {
+                ...updates,
+                lastUpdateTime: new Date().toISOString(),
+            });
+        } catch (e: any) {
+            // If 404, maybe recreate? For now just log
+            console.log("Failed to update live session", e);
+        }
+    };
+
+    const deleteLiveSession = async (liveId: string) => {
+        if (!liveId) return;
+        try {
+            await databases.deleteDocument(DB_ID, COLLECTIONS.LIVE_SESSIONS, liveId);
+        } catch (e) {
+            console.log("Failed to delete live session", e);
+        }
+    };
+
+    const createStudySession = async (sessionData: { subject: string; goal: string }) => {
+        if (!user) return null;
+        try {
+            const session = await databases.createDocument(
+                DB_ID,
+                COLLECTIONS.STUDY_SESSIONS,
+                ID.unique(),
+                {
+                    userId: user.$id,
+                    subject: sessionData.subject || "Focus Session",
+                    goal: sessionData.goal || "",
+                    type: mode,
+                    startTime: new Date().toISOString(),
+                    endTime: new Date().toISOString(), // Will update this
+                    duration: 0,
+                    status: "active",
+                    isPublic: true,
+                }
+            );
+            return session.$id;
+        } catch (e) {
+            console.error("Failed to create study session", e);
+            return null;
+        }
+    };
+
+    // Controls
+    const toggleTimer = async () => {
+        if (!isActive) {
+            // START
+            setIsActive(true);
+            setIsPaused(false);
+
+            // Create sessions if not existing
+            if (user && !sessionId && mode === "focus") {
+                const sId = await createStudySession({ subject: "Focus Session", goal: "" });
+                const lId = await createLiveSession({ subject: "Focus Session", goal: "", duration });
+                if (sId) setSessionId(sId);
+                if (lId) setLiveSessionId(lId);
+            } else if (liveSessionId) {
+                // Resume live session
+                updateLiveSession(liveSessionId, { status: "active" });
+            }
+
+        } else if (!isPaused) {
+            // PAUSE
+            setIsPaused(true);
+            startTimeRef.current = null;
+
+            if (liveSessionId) {
+                updateLiveSession(liveSessionId, { status: "paused", elapsedTime: elapsed });
+            }
+        } else {
+            // RESUME
+            setIsPaused(false);
+            if (liveSessionId) {
+                updateLiveSession(liveSessionId, { status: "active", elapsedTime: elapsed });
+            }
+        }
+    };
+
+    const resetTimer = async () => {
         setIsActive(false);
         setIsPaused(false);
         setElapsed(0);
         startTimeRef.current = null;
+
+        if (liveSessionId) {
+            await deleteLiveSession(liveSessionId);
+            setLiveSessionId(null);
+        }
+
+        // Determine status for study session
+        if (sessionId) {
+            // If very short, maybe delete? For now just mark incomplete or completed based on time?
+            // Usually we might just leave it or mark as cancelled.
+            // Let's mark as completed if reasonable time passed, or delete.
+            if (elapsed > 60) {
+                await databases.updateDocument(DB_ID, COLLECTIONS.STUDY_SESSIONS, sessionId, {
+                    status: "completed", // Or stopped
+                    duration: elapsed,
+                    endTime: new Date().toISOString()
+                }).catch(e => { });
+            } else {
+                await databases.deleteDocument(DB_ID, COLLECTIONS.STUDY_SESSIONS, sessionId).catch(e => { });
+            }
+            setSessionId(null);
+        }
     };
 
-    const switchMode = (newMode: "focus" | "break") => {
+    const switchMode = async (newMode: "focus" | "break") => {
+        // Stop current if running
+        if (isActive) await resetTimer();
+
         setMode(newMode);
-        setDuration(newMode === "focus" ? 25 * 60 : 5 * 60);
-        resetTimer();
+        setDuration(newMode === "focus" ? targetDuration : (autoStartBreak ? 5 * 60 : 5 * 60)); // Simple break duration for now
     };
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins.toString().padStart(2, "0")}:${secs
-            .toString()
-            .padStart(2, "0")}`;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    // Determine progress
+    // Calculate remaining
     const remaining = Math.max(0, duration - elapsed);
     const progress = Math.min(100, (elapsed / duration) * 100);
+    const remainingTimeStr = formatTime(remaining);
+
+    // Apply color theme
+    const getColor = (colorName: string) => {
+        const theme = THEMES.find(t => t.id === themeColor);
+        return theme ? theme.color : Colors.dark.primary;
+    };
+
+    // Constants for themes
+    const THEMES = [
+        { id: "indigo", name: "Deep Space", color: "#6366f1" },
+        { id: "cyan", name: "Cyberpunk", color: "#06b6d4" },
+        { id: "green", name: "Matrix", color: "#22c55e" },
+        { id: "amber", name: "Industrial", color: "#f59e0b" },
+        { id: "rose", name: "Neon City", color: "#f43f5e" },
+        { id: "violet", name: "Synthwave", color: "#8b5cf6" },
+    ];
+
+    const activeColor = mode === "break" ? "#22c55e" : (THEMES.find(t => t.id === themeColor)?.color || "#6366f1");
 
     return (
         <View style={styles.container}>
-            <View style={styles.modeContainer}>
-                <TouchableOpacity
-                    style={[styles.modeButton, mode === "focus" && styles.modeButtonActive]}
-                    onPress={() => switchMode("focus")}
-                >
-                    <Brain size={20} color={mode === "focus" ? Colors.dark.primaryForeground : Colors.dark.textMuted} />
-                    <Text style={[styles.modeText, mode === "focus" && styles.modeTextActive]}>Focus</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.modeButton, mode === "break" && styles.modeButtonActive]}
-                    onPress={() => switchMode("break")}
-                >
-                    <Coffee size={20} color={mode === "break" ? Colors.dark.primaryForeground : Colors.dark.textMuted} />
-                    <Text style={[styles.modeText, mode === "break" && styles.modeTextActive]}>Break</Text>
-                </TouchableOpacity>
+            {/* Top Bar */}
+            <View style={styles.topBar}>
+                <View style={styles.modeContainer}>
+                    <TouchableOpacity
+                        style={[styles.modeButton, mode === "focus" && { backgroundColor: activeColor + '20' }]}
+                        onPress={() => switchMode("focus")}
+                    >
+                        <Brain size={16} color={mode === "focus" ? activeColor : Colors.dark.textMuted} />
+                        <Text style={[styles.modeText, mode === "focus" && { color: activeColor }]}>Focus</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.modeButton, mode === "break" && { backgroundColor: '#22c55e20' }]}
+                        onPress={() => switchMode("break")}
+                    >
+                        <Coffee size={16} color={mode === "break" ? '#22c55e' : Colors.dark.textMuted} />
+                        <Text style={[styles.modeText, mode === "break" && { color: '#22c55e' }]}>Break</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity onPress={() => setShowDesigner(true)} style={styles.settingsButton}>
+                        <CalendarDays size={24} color={Colors.dark.textMuted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsButton}>
+                        <Settings size={24} color={Colors.dark.textMuted} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            <View style={styles.timerCircle}>
-                <Text style={styles.timerText}>{formatTime(remaining)}</Text>
-                <Text style={styles.statusText}>{isActive ? (isPaused ? "PAUSED" : "RUNNING") : "READY"}</Text>
+            {/* Timer Display */}
+            <View style={styles.timerDisplayContainer}>
+                {timerStyle === "grid" || timerStyle === "digital" ? (
+                    <DigitalTimerDisplay
+                        time={remainingTimeStr}
+                        themeColor={themeColor}
+                        isBreak={mode === "break"}
+                        size="lg"
+                        timerFont={timerFont}
+                    />
+                ) : timerStyle === "circular" ? (
+                    <CircularTimerDisplay
+                        time={remainingTimeStr}
+                        progress={progress}
+                        themeColor={themeColor}
+                        isBreak={mode === "break"}
+                        size="md"
+                        timerFont={timerFont}
+                    />
+                ) : (
+                    <MinimalTimerDisplay
+                        time={remainingTimeStr}
+                        themeColor={themeColor}
+                        isBreak={mode === "break"}
+                        size="md"
+                        timerFont={timerFont}
+                    />
+                )}
+
+                <Text style={[styles.statusText, { color: activeColor }]}>
+                    {isActive ? (isPaused ? "PAUSED" : (mode === "focus" ? "FOCUSING" : "BREAK")) : "READY"}
+                </Text>
             </View>
 
+            {/* Controls */}
             <View style={styles.controls}>
-                <TouchableOpacity style={styles.controlButton} onPress={toggleTimer}>
+                <TouchableOpacity
+                    style={[styles.controlButton, { backgroundColor: activeColor + '20' }]}
+                    onPress={toggleTimer}
+                >
                     {isActive && !isPaused ? (
-                        <Pause size={32} color={Colors.dark.text} />
+                        <Pause size={32} color={activeColor} />
                     ) : (
-                        <Play size={32} color={Colors.dark.text} />
+                        <Play size={32} color={activeColor} />
                     )}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.controlButton} onPress={resetTimer}>
-                    <RotateCcw size={28} color={Colors.dark.text} />
+                <TouchableOpacity
+                    style={[styles.controlButton, { backgroundColor: Colors.dark.surfaceHighlight }]}
+                    onPress={resetTimer}
+                >
+                    <RotateCcw size={28} color={Colors.dark.textMuted} />
                 </TouchableOpacity>
             </View>
+
+            {/* Session Designer */}
+            <SessionDesigner
+                isOpen={showDesigner}
+                onClose={() => setShowDesigner(false)}
+                onSave={async (blocks, startTime) => {
+                    // Save schedule to Appwrite logic here
+                    // For now we just implement "Start Now" via onStartNow
+                    setShowDesigner(false);
+                }}
+                onStartNow={(blocks) => {
+                    if (blocks.length > 0) {
+                        const first = blocks[0];
+                        setDuration(first.duration * 60);
+                        setTargetDuration(first.duration * 60);
+                        setMode(first.type);
+                        // Could also set subject/goals here
+                        setShowDesigner(false);
+                        // Optionally auto-start
+                        setTimeout(() => toggleTimer(), 500);
+                    }
+                }}
+            />
+
+            {/* Settings Modal */}
+            <TimerSettings
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+                themeColor={themeColor}
+                setThemeColor={setThemeColor}
+                soundEnabled={soundEnabled}
+                setSoundEnabled={setSoundEnabled}
+                visualMode={visualMode}
+                setVisualMode={setVisualMode}
+                timerStyle={timerStyle}
+                setTimerStyle={setTimerStyle}
+                timerFont={timerFont}
+                setTimerFont={setTimerFont}
+                autoStartFocus={autoStartFocus}
+                setAutoStartFocus={setAutoStartFocus}
+                autoStartBreak={autoStartBreak}
+                setAutoStartBreak={setAutoStartBreak}
+                targetDuration={targetDuration}
+                setTargetDuration={setTargetDuration}
+                applyPreset={(focus) => {
+                    setTargetDuration(focus * 60);
+                    if (mode === "focus") {
+                        setDuration(focus * 60);
+                        resetTimer();
+                    }
+                }}
+            />
         </View>
     );
 }
@@ -191,68 +591,61 @@ const styles = StyleSheet.create({
         padding: 24,
         width: '100%',
         alignItems: "center",
+        flex: 1,
+    },
+    topBar: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 48,
     },
     modeContainer: {
         flexDirection: 'row',
         backgroundColor: Colors.dark.surface,
         borderRadius: 16,
         padding: 4,
-        marginBottom: 48,
     },
     modeButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         borderRadius: 12,
         gap: 8,
     },
-    modeButtonActive: {
-        backgroundColor: Colors.dark.primary,
-    },
     modeText: {
-        color: Colors.dark.textMuted,
+        fontSize: 14,
         fontWeight: '600',
     },
-    modeTextActive: {
-        color: Colors.dark.primaryForeground,
-    },
-    timerCircle: {
-        width: 280,
-        height: 280,
-        borderRadius: 140,
-        borderWidth: 4,
-        borderColor: Colors.dark.surfaceHighlight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 48,
+    settingsButton: {
+        padding: 8,
+        borderRadius: 12,
         backgroundColor: Colors.dark.surface,
     },
-    timerText: {
-        fontSize: 64,
-        fontWeight: '700',
-        color: Colors.dark.text,
-        fontVariant: ['tabular-nums'],
+    timerDisplayContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 64,
+        flex: 1,
     },
     statusText: {
         fontSize: 16,
-        color: Colors.dark.primary,
-        marginTop: 8,
-        fontWeight: '500',
-        letterSpacing: 2,
+        marginTop: 24,
+        fontWeight: '600',
+        letterSpacing: 4,
     },
     controls: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 32,
+        marginBottom: 24,
     },
     controlButton: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: Colors.dark.surfaceHighlight,
+        width: 72,
+        height: 72,
+        borderRadius: 36,
         justifyContent: 'center',
         alignItems: 'center',
     }
-
 });

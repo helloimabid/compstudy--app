@@ -1,8 +1,10 @@
 import { Colors } from "@/constants/Colors";
-import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
+import { BUCKET_ID, COLLECTIONS, databases, DB_ID, storage } from "@/lib/appwrite";
+import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock, Flame, Zap } from "lucide-react-native";
 import { useEffect, useState } from "react";
+
 import {
     ActivityIndicator,
     ScrollView,
@@ -116,12 +118,26 @@ export default function ProfileScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
+
                 {/* Profile Info */}
                 <View style={styles.profileCard}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                            {profile.username[0]?.toUpperCase() || "?"}
-                        </Text>
+                        {profile?.profilePicture ? (
+                            <Image
+                                source={{
+                                    uri: profile.profilePicture.startsWith("http")
+                                        ? profile.profilePicture
+                                        : storage.getFilePreview(BUCKET_ID, profile.profilePicture).toString(),
+                                }}
+                                style={styles.avatarImage}
+                                contentFit="cover"
+                                transition={1000}
+                            />
+                        ) : (
+                            <Text style={styles.avatarText}>
+                                {profile?.username?.[0]?.toUpperCase() || "?"}
+                            </Text>
+                        )}
                     </View>
                     <Text style={styles.username}>{profile.username}</Text>
                     {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
@@ -241,6 +257,11 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginBottom: 16,
+        overflow: "hidden",
+    },
+    avatarImage: {
+        width: "100%",
+        height: "100%",
     },
     avatarText: {
         fontSize: 40,

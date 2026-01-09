@@ -1,10 +1,12 @@
+import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
-import { useAuth } from "@/context/AuthContext";
+import { BUCKET_ID, storage } from "@/lib/appwrite";
 import {
     DrawerContentComponentProps,
     DrawerContentScrollView,
     DrawerItemList,
 } from "@react-navigation/drawer";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import {
     BarChart2,
@@ -31,9 +33,22 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                     {user ? (
                         <>
                             <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {profile?.username?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "?"}
-                                </Text>
+                                {profile?.profilePicture ? (
+                                    <Image
+                                        source={{
+                                            uri: profile.profilePicture.startsWith("http")
+                                                ? profile.profilePicture
+                                                : storage.getFilePreview(BUCKET_ID, profile.profilePicture).toString(),
+                                        }}
+                                        style={styles.avatarImage}
+                                        contentFit="cover"
+                                        transition={1000}
+                                    />
+                                ) : (
+                                    <Text style={styles.avatarText}>
+                                        {profile?.username?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "?"}
+                                    </Text>
+                                )}
                             </View>
                             <Text style={styles.username}>{profile?.username || user.name || "Student"}</Text>
                             <Text style={styles.email}>{user.email}</Text>
@@ -149,6 +164,11 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginBottom: 12,
+        overflow: "hidden", // Ensure image clips to circle
+    },
+    avatarImage: {
+        width: "100%",
+        height: "100%",
     },
     avatarText: {
         fontSize: 28,

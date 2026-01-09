@@ -1,5 +1,5 @@
+import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
-import { useAuth } from "@/context/AuthContext";
 import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
 import { router } from "expo-router";
 import { Book, ChevronRight, GraduationCap } from "lucide-react-native";
