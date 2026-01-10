@@ -393,8 +393,8 @@ export default function NativeStudyTimer() {
         status: "completed",
         elapsedTime: duration,
       });
-      // Optionally delete live session or keep it as completed
-      deleteLiveSession(liveSessionId);
+      // Delete the live session from the collection
+      await deleteLiveSession(liveSessionId);
       setLiveSessionId(null);
     }
 
