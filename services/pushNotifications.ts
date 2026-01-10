@@ -14,7 +14,7 @@ class PushNotificationService {
   constructor() {
     // You'll need to set your Appwrite API key
     // This should be stored securely (environment variables)
-    this.apiKey =  'standard_f46dbfc5e0f0148e125c347e92c6f598fe0913e76fe279506c73bba6743b1bb8f45ed431c9761bbc1642a5efffa92a246ce11a778cf162ae9a49eb5519dd74e064c8904ddaf77f779ab9cbf3312967aca3e168cd0f8deba88aba89bab4ff12f7cddbac63bf3dd4c0f717eacf956b67f227f620f2e26f00e03dc461f52032ef8f';
+    this.apiKey = 'standard_f46dbfc5e0f0148e125c347e92c6f598fe0913e76fe279506c73bba6743b1bb8f45ed431c9761bbc1642a5efffa92a246ce11a778cf162ae9a49eb5519dd74e064c8904ddaf77f779ab9cbf3312967aca3e168cd0f8deba88aba89bab4ff12f7cddbac63bf3dd4c0f717eacf956b67f227f620f2e26f00e03dc461f52032ef8f';
   }
 
   /**
