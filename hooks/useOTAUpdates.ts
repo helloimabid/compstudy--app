@@ -1,5 +1,5 @@
-import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
+import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
 
 // Ensure notifications are handled even if app is in foreground
