@@ -139,7 +139,7 @@ export default function StartStudyingScreen() {
 
                         <View style={styles.cardBody}>
                             <Text style={styles.cardTitle}>Browse Live Sessions</Text>
-                            <Text style={styles.cardSubtitle}>See who's studying right now and get inspired</Text>
+                            <Text style={styles.cardSubtitle}>See who is studying right now and get inspired</Text>
 
                             <View style={styles.liveFooter}>
                                 <View style={styles.avatarStack}>

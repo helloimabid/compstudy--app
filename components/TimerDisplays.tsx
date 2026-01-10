@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Svg, { Circle, G } from "react-native-svg";
 
 export type TimerFont =
     | "default"
@@ -85,7 +86,6 @@ export const CircularTimerDisplay = ({
     size?: "sm" | "md" | "lg";
     timerFont?: TimerFont;
 }) => {
-    // Basic circular implementation using a Border Ring (since we don't have SVG installed)
     const colorMap: Record<string, string> = {
         indigo: "#6366f1",
         cyan: "#06b6d4",
@@ -107,32 +107,39 @@ export const CircularTimerDisplay = ({
     };
 
     const s = getSize();
-    const half = s / 2;
+    const strokeWidth = 12;
+    const center = s / 2;
+    const radius = (s - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
-        <View style={[styles.circleContainer, { width: s, height: s, borderRadius: half }]}>
-            {/* Background Ring */}
-            <View style={[
-                styles.ring,
-                {
-                    width: s,
-                    height: s,
-                    borderRadius: half,
-                    borderColor: 'rgba(255,255,255,0.1)',
-                }
-            ]} />
-
-            {/* Active Ring - Simplified as a full ring for now as React Native without SVG cannot do partial stroke easily */}
-            <View style={[
-                styles.ring,
-                {
-                    width: s,
-                    height: s,
-                    borderRadius: half,
-                    borderColor: strokeColor,
-                    opacity: progress > 0 ? 1 : 0.3 // Just dim it based on progress
-                }
-            ]} />
+        <View style={[styles.circleContainer, { width: s, height: s }]}>
+            <Svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+                <G rotation="-90" origin={`${center}, ${center}`}>
+                    {/* Background Ring */}
+                    <Circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth={strokeWidth}
+                        fill="transparent"
+                    />
+                    {/* Progress Ring */}
+                    <Circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        fill="transparent"
+                    />
+                </G>
+            </Svg>
 
             <View style={styles.absoluteCenter}>
                 <DigitalTimerDisplay

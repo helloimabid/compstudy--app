@@ -42,7 +42,7 @@ app-example
 /ios
 /android
 
-# /src
+/website_reference
 
 @holaimabids-organization__compstudy.jks
 credentials.json

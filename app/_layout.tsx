@@ -9,6 +9,7 @@ import "react-native-reanimated";
 
 import { AppwriteProvider } from "@/components/AppwriteProvider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useOTAUpdates } from "@/hooks/useOTAUpdates";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -16,14 +17,24 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useOTAUpdates();
 
   return (
     <AppwriteProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            animationDuration: 200,
+          }}
+        >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="profile/[userId]" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="profile/[userId]"
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name="room" options={{ headerShown: false }} />
           <Stack.Screen name="blog/index" options={{ headerShown: false }} />
           <Stack.Screen name="blog/[slug]" options={{ headerShown: false }} />
