@@ -62,7 +62,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                                     </View>
                             </View>
                             <Text style={styles.appName}>CompStudy</Text>
-                            <Text style={styles.tagline}>Study together, grow together</Text>
+                            <Text style={styles.tagline}>Study Alone, Compete Together</Text>
                         </>
                     )}
                 </View>
