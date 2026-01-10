@@ -553,29 +553,95 @@ export default function NativeStudyTimer() {
     }
   };
 
+  // Helper to start new session
+  const startFocusSession = async () => {
+    const subjName =
+      subjects.find((s) => s.$id === selectedSubjectId)?.name ||
+      "Focus Session";
+    const sId = await createStudySession({
+      subject: subjName,
+      goal: sessionGoal,
+    });
+    const lId = await createLiveSession({
+      subject: subjName,
+      goal: sessionGoal,
+      duration,
+    });
+    if (sId) setSessionId(sId);
+    if (lId) setLiveSessionId(lId);
+  };
+
   // Controls
   const toggleTimer = async () => {
     if (!isActive) {
       // START
+
+      // Check for existing active sessions if starting fresh focus session
+      if (user && !sessionId && mode === "focus") {
+        try {
+          const activeSessions = await databases.listDocuments(
+            DB_ID,
+            COLLECTIONS.STUDY_SESSIONS,
+            [
+              Query.equal("userId", user.$id),
+              Query.equal("status", "active"),
+              Query.limit(1),
+            ]
+          );
+
+          if (activeSessions.total > 0) {
+            const existingSession = activeSessions.documents[0];
+            Alert.alert(
+              "Active Session Found",
+              "You already have an active focus session. What would you like to do?",
+              [
+                {
+                  text: "Resume Existing",
+                  onPress: () => {
+                    setSessionId(existingSession.$id);
+                    setIsActive(true);
+                    setIsPaused(false);
+                  },
+                },
+                {
+                  text: "Start New (End Old)",
+                  style: "destructive",
+                  onPress: async () => {
+                    // End old session
+                    await databases.updateDocument(
+                      DB_ID,
+                      COLLECTIONS.STUDY_SESSIONS,
+                      existingSession.$id,
+                      {
+                        status: "completed",
+                        endTime: new Date().toISOString(),
+                      }
+                    );
+
+                    setIsActive(true);
+                    setIsPaused(false);
+                    await startFocusSession();
+                  },
+                },
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+              ]
+            );
+            return;
+          }
+        } catch (e) {
+          console.error("Error checking active sessions", e);
+        }
+      }
+
       setIsActive(true);
       setIsPaused(false);
 
       // Create sessions if not existing
       if (user && !sessionId && mode === "focus") {
-        const subjName =
-          subjects.find((s) => s.$id === selectedSubjectId)?.name ||
-          "Focus Session";
-        const sId = await createStudySession({
-          subject: subjName,
-          goal: sessionGoal,
-        });
-        const lId = await createLiveSession({
-          subject: subjName,
-          goal: sessionGoal,
-          duration,
-        });
-        if (sId) setSessionId(sId);
-        if (lId) setLiveSessionId(lId);
+        await startFocusSession();
       } else if (liveSessionId) {
         // Resume live session
         updateLiveSession(liveSessionId, { status: "active" });
