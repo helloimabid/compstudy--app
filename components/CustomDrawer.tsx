@@ -57,8 +57,8 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                     ) : (
                         <>
                             <View style={styles.logoContainer}>
-                                <View style={styles.avatar}>
-                                <Image source={require("@/assets/images/favicon.png")} style={styles.avatarImage} contentFit="cover" transition={1000} />
+                                <View style={styles.logo}>
+                                <Image source={require("@/assets/images/favicon.png")} style={styles.logoImage} contentFit="cover" transition={1000} />
                                     </View>
                             </View>
                             <Text style={styles.appName}>CompStudy</Text>
@@ -196,6 +196,8 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.dark.textMuted,
     },
+
+
     logoContainer: {
         width: 64,
         height: 64,
@@ -205,6 +207,15 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 12,
     },
+    logo: {
+        width: "100%",
+        height: "100%",
+    },
+    logoImage: {
+        width: "100%",
+        height: "100%",
+    },
+    
     appName: {
         fontSize: 22,
         fontWeight: "700",
