@@ -25,7 +25,7 @@ import {
   Text,
   TouchableOpacity,
   Vibration,
-  View,
+  View
 } from "react-native";
 import { ID, Permission, Role } from "react-native-appwrite";
 import { useAuth } from "./AppwriteProvider";
@@ -326,6 +326,47 @@ export default function NativeStudyTimer() {
     manageNotification();
   }, [isActive, isPaused, duration, mode, timerMode]); // Removed elapsed to avoid re-scheduling every second
 
+  const handleComplete = async () => {
+    if (soundEnabled) {
+      Vibration.vibrate([500, 500, 500]);
+      Alert.alert(
+        "Timer Finished!",
+        mode === "focus" ? "Time for a break!" : "Time to focus!"
+      );
+    }
+
+    setIsActive(false);
+    setIsPaused(false);
+    setElapsed(duration); // Clamp to duration
+
+    // Logic to switch modes automatically
+    const nextMode = mode === "focus" ? "break" : "focus";
+    const shouldAutoStart = mode === "focus" ? autoStartBreak : autoStartFocus;
+
+    setTimeout(() => {
+      switchMode(nextMode);
+      if (shouldAutoStart) {
+        setTimeout(() => setIsActive(true), 100);
+      }
+    }, 1500);
+
+    // Cleanup sessions - delete directly without status update
+    if (liveSessionId) {
+      await deleteLiveSession(liveSessionId);
+      setLiveSessionId(null);
+    }
+
+    if (sessionId) {
+      await databases
+        .updateDocument(DB_ID, COLLECTIONS.STUDY_SESSIONS, sessionId, {
+          status: "completed",
+          duration: duration,
+        })
+        .catch((e) => console.log("Failed to complete session", e));
+      setSessionId(null);
+    }
+  };
+
   // Timer Interval
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -361,53 +402,23 @@ export default function NativeStudyTimer() {
     }
 
     return () => clearInterval(interval);
-  }, [isActive, isPaused, duration, mode]);
+  }, [isActive, isPaused, duration, mode, timerMode, handleComplete]);
 
-  const handleComplete = async () => {
-    if (soundEnabled) {
-      Vibration.vibrate([500, 500, 500]);
-      Alert.alert(
-        "Timer Finished!",
-        mode === "focus" ? "Time for a break!" : "Time to focus!"
-      );
-    }
-
-    setIsActive(false);
-    setIsPaused(false);
-    setElapsed(duration); // Clamp to duration
-
-    // Logic to switch modes automatically
-    const nextMode = mode === "focus" ? "break" : "focus";
-    const shouldAutoStart = mode === "focus" ? autoStartBreak : autoStartFocus;
-
-    setTimeout(() => {
-      switchMode(nextMode);
-      if (shouldAutoStart) {
-        setTimeout(() => setIsActive(true), 100);
-      }
-    }, 1500);
-
-    // Cleanup sessions
-    if (liveSessionId) {
-      await updateLiveSession(liveSessionId, {
-        status: "completed",
-        elapsedTime: duration,
-      });
-      // Delete the live session from the collection
-      await deleteLiveSession(liveSessionId);
-      setLiveSessionId(null);
-    }
-
-    if (sessionId) {
-      await databases
-        .updateDocument(DB_ID, COLLECTIONS.STUDY_SESSIONS, sessionId, {
+  // Cleanup live sessions on unmount or when user changes
+  useEffect(() => {
+    return () => {
+      if (liveSessionId) {
+        updateLiveSession(liveSessionId, {
           status: "completed",
-          duration: duration,
-        })
-        .catch((e) => console.log("Failed to complete session", e));
-      setSessionId(null);
-    }
-  };
+          elapsedTime: elapsed,
+        }).then(() => {
+          deleteLiveSession(liveSessionId);
+        }).catch((error) => {
+          console.error("Failed to cleanup live session:", error);
+        });
+      }
+    };
+  }, [user]); // Only re-run when user changes
 
   // AppState handling (Background/Foreground)
   useEffect(() => {
