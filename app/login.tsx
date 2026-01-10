@@ -122,170 +122,174 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
 
-            {/* Background Effects */}
-            <View style={styles.backgroundContainer}>
-                <Animated.View style={[styles.blob1, blob1Style]} />
-                <Animated.View style={[styles.blob2, blob2Style]} />
-            </View>
-
-            <SafeAreaView style={{ flex: 1 }}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={styles.keyboardView}
-                >
-                    <ScrollView
-                        contentContainerStyle={styles.scrollContent}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        {/* Glassmorphic Card */}
-                        <View style={styles.glassCard}>
-                            {/* Header */}
-                            <View style={styles.header}>
-                                <Text style={styles.title}>
-                                    {isRegistering ? "Create Account" : "Welcome Back"}
-                                </Text>
-                                <Text style={styles.subtitle}>
-                                    {isRegistering
-                                        ? "Join the competitive study community."
-                                        : "Enter your credentials to continue."}
-                                </Text>
-                            </View>
-
-                            {/* Error */}
-                            {error ? (
-                                <View style={styles.errorContainer}>
-                                    <Text style={styles.errorText}>{error}</Text>
-                                </View>
-                            ) : null}
-
-                            {/* Form */}
-                            <View style={styles.form}>
-                                {isRegistering && (
-                                    <View style={styles.inputContainer}>
-                                        <User
-                                            size={18}
-                                            color={Colors.dark.textMuted}
-                                            style={styles.inputIcon}
-                                        />
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Username"
-                                            placeholderTextColor={Colors.dark.textMuted}
-                                            value={username}
-                                            onChangeText={setUsername}
-                                            autoCapitalize="none"
-                                        />
-                                    </View>
-                                )}
-
-                                <View style={styles.inputContainer}>
-                                    <Mail
-                                        size={18}
-                                        color={Colors.dark.textMuted}
-                                        style={styles.inputIcon}
-                                    />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Email address"
-                                        placeholderTextColor={Colors.dark.textMuted}
-                                        value={email}
-                                        onChangeText={setEmail}
-                                        keyboardType="email-address"
-                                        autoCapitalize="none"
-                                    />
-                                </View>
-
-                                <View style={styles.inputContainer}>
-                                    <Lock
-                                        size={18}
-                                        color={Colors.dark.textMuted}
-                                        style={styles.inputIcon}
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { flex: 1 }]}
-                                        placeholder="Password"
-                                        placeholderTextColor={Colors.dark.textMuted}
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        secureTextEntry={!showPassword}
-                                    />
-                                    <Pressable
-                                        onPress={() => setShowPassword(!showPassword)}
-                                        style={styles.eyeButton}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff size={18} color={Colors.dark.textMuted} />
-                                        ) : (
-                                            <Eye size={18} color={Colors.dark.textMuted} />
-                                        )}
-                                    </Pressable>
-                                </View>
-
-                                <TouchableOpacity
-                                    onPress={handleSubmit}
-                                    disabled={isSubmitting}
-                                    activeOpacity={0.8}
-                                >
-                                    <LinearGradient
-                                        colors={Colors.dark.gradients.primary as any}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 0 }}
-                                        style={[
-                                            styles.submitButton,
-                                            isSubmitting && styles.submitButtonDisabled,
-                                        ]}
-                                    >
-                                        {isSubmitting ? (
-                                            <ActivityIndicator size="small" color="#fff" />
-                                        ) : (
-                                            <Text style={styles.submitButtonText}>
-                                                {isRegistering ? "Create Account" : "Sign In"}
-                                            </Text>
-                                        )}
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Google OAuth Button */}
-                            <View style={styles.dividerContainer}>
-                                <View style={styles.dividerLine} />
-                                <Text style={styles.dividerText}>Or continue with</Text>
-                                <View style={styles.dividerLine} />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.googleButton}
-                                onPress={handleGoogleLogin}
-                                disabled={isSubmitting}
-                            >
-                                <Image
-                                    source={{ uri: "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" }}
-                                    style={styles.googleIcon}
-                                />
-                                <Text style={styles.googleButtonText}>Sign in with Google</Text>
-                            </TouchableOpacity>
-
-                            {/* Toggle */}
-                            <View style={styles.toggleContainer}>
-                                <Text style={styles.toggleText}>
-                                    {isRegistering
-                                        ? "Already have an account?"
-                                        : "Don't have an account?"}
-                                </Text>
-                                <TouchableOpacity onPress={toggleMode}>
-                                    <Text style={styles.toggleLink}>
-                                        {isRegistering ? "Sign In" : "Create Account"}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </SafeAreaView>
+        {/* Background Effects */}
+        <View style={styles.backgroundContainer}>
+          <Animated.View style={[styles.blob1, blob1Style]} />
+          <Animated.View style={[styles.blob2, blob2Style]} />
         </View>
+
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardView}
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Glassmorphic Card */}
+              <View style={styles.glassCard}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <Text style={styles.title}>
+                    {isRegistering ? "Create Account" : "Welcome Back"}
+                  </Text>
+                  <Text style={styles.subtitle}>
+                    {isRegistering
+                      ? "Join the competitive study community."
+                      : "Enter your credentials to continue."}
+                  </Text>
+                </View>
+
+                {/* Error */}
+                {error ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : null}
+
+                {/* Form */}
+                <View style={styles.form}>
+                  {isRegistering && (
+                    <View style={styles.inputContainer}>
+                      <User
+                        size={18}
+                        color={Colors.dark.textMuted}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Username"
+                        placeholderTextColor={Colors.dark.textMuted}
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  )}
+
+                  <View style={styles.inputContainer}>
+                    <Mail
+                      size={18}
+                      color={Colors.dark.textMuted}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email address"
+                      placeholderTextColor={Colors.dark.textMuted}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Lock
+                      size={18}
+                      color={Colors.dark.textMuted}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="Password"
+                      placeholderTextColor={Colors.dark.textMuted}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeButton}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={18} color={Colors.dark.textMuted} />
+                      ) : (
+                        <Eye size={18} color={Colors.dark.textMuted} />
+                      )}
+                    </Pressable>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={handleSubmit}
+                    disabled={isSubmitting}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={Colors.dark.gradients.primary as any}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[
+                        styles.submitButton,
+                        isSubmitting && styles.submitButtonDisabled,
+                      ]}
+                    >
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.submitButtonText}>
+                          {isRegistering ? "Create Account" : "Sign In"}
+                        </Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Google OAuth Button */}
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>Or continue with</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.googleButton}
+                  onPress={handleGoogleLogin}
+                  disabled={isSubmitting}
+                >
+                  <Image
+                    source={{
+                      uri: "https://img.icons8.com/fluency/48/google-logo.png",
+                    }}
+                    style={styles.googleIcon}
+                  />
+                  <Text style={styles.googleButtonText}>
+                    Sign in with Google
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Toggle */}
+                <View style={styles.toggleContainer}>
+                  <Text style={styles.toggleText}>
+                    {isRegistering
+                      ? "Already have an account?"
+                      : "Don't have an account?"}
+                  </Text>
+                  <TouchableOpacity onPress={toggleMode}>
+                    <Text style={styles.toggleLink}>
+                      {isRegistering ? "Sign In" : "Create Account"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </View>
     );
 }
 

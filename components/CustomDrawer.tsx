@@ -57,7 +57,9 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                     ) : (
                         <>
                             <View style={styles.logoContainer}>
-                                <BookOpen size={32} color={Colors.dark.primary} />
+                                <View style={styles.avatar}>
+                                <Image source={require("@/assets/images/favicon.png")} style={styles.avatarImage} contentFit="cover" transition={1000} />
+                                    </View>
                             </View>
                             <Text style={styles.appName}>CompStudy</Text>
                             <Text style={styles.tagline}>Study together, grow together</Text>
