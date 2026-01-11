@@ -350,9 +350,19 @@ export default function NativeStudyTimer() {
       }
     }, 1500);
 
-    // Cleanup sessions - delete directly without status update
+    // Cleanup sessions - update status first, then delete
     if (liveSessionId) {
-      await deleteLiveSession(liveSessionId);
+      try {
+        // First update status to completed
+        await updateLiveSession(liveSessionId, {
+          status: "completed",
+          elapsedTime: duration,
+        });
+        // Then delete the session
+        await deleteLiveSession(liveSessionId);
+      } catch (e) {
+        console.error("Failed to cleanup live session on completion", e);
+      }
       setLiveSessionId(null);
     }
 
@@ -408,17 +418,22 @@ export default function NativeStudyTimer() {
   useEffect(() => {
     return () => {
       if (liveSessionId) {
+        // Update status to completed and delete
         updateLiveSession(liveSessionId, {
           status: "completed",
           elapsedTime: elapsed,
-        }).then(() => {
-          deleteLiveSession(liveSessionId);
-        }).catch((error) => {
-          console.error("Failed to cleanup live session:", error);
-        });
+        })
+          .then(() => deleteLiveSession(liveSessionId))
+          .catch((error) => {
+            console.error("Failed to cleanup live session on unmount:", error);
+            // If update fails, try to at least delete
+            deleteLiveSession(liveSessionId).catch((e) => 
+              console.error("Failed to delete live session on unmount:", e)
+            );
+          });
       }
     };
-  }, [user]); // Only re-run when user changes
+  }, [liveSessionId, elapsed]); // Track liveSessionId and elapsed
 
   // AppState handling (Background/Foreground)
   useEffect(() => {
@@ -687,7 +702,16 @@ export default function NativeStudyTimer() {
     startTimeRef.current = null;
 
     if (liveSessionId) {
-      await deleteLiveSession(liveSessionId);
+      try {
+        // Update status to completed before deleting
+        await updateLiveSession(liveSessionId, {
+          status: "completed",
+          elapsedTime: elapsed,
+        });
+        await deleteLiveSession(liveSessionId);
+      } catch (e) {
+        console.error("Failed to cleanup live session on reset", e);
+      }
       setLiveSessionId(null);
     }
 

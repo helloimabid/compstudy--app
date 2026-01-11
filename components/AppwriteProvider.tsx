@@ -1,8 +1,8 @@
 import { account, COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
+import { FCMTokenManager } from '@/services/fcmTokenManager';
 import { makeRedirectUri } from 'expo-auth-session';
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as Notifications from 'expo-notifications';
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { ID, Models, OAuthProvider, Permission, Query, Role } from "react-native-appwrite";
 
@@ -70,31 +70,10 @@ export function AppwriteProvider({ children }: { children: ReactNode }) {
                     }
                 }
 
-                // Initialize FCM token for push notifications
                 try {
-                    const tokenData = await Notifications.getExpoPushTokenAsync({
-                        projectId: 'b8a1785f-2be9-4b89-bb99-85d4d12e5557'
-                    });
-                    
-                    if (tokenData.data) {
-                        console.log('FCM Token obtained:', tokenData.data);
-                        // Save token to user profile or separate FCM tokens collection
-                        await databases.createDocument(
-                            DB_ID,
-                            'fcm_tokens',
-                            ID.unique(),
-                            {
-                                userId: session.$id,
-                                token: tokenData.data,
-                                platform: 'mobile',
-                                userAgent: 'Expo',
-                                createdAt: new Date().toISOString(),
-                                isActive: true
-                            }
-                        ).catch(e => console.log('FCM token already exists or failed to save:', e));
-                    }
+                    await FCMTokenManager.initializeToken();
                 } catch (error) {
-                    console.error('Failed to get FCM token:', error);
+                    console.error('Failed to initialize FCM token:', error);
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -229,6 +208,7 @@ export function AppwriteProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
+        await FCMTokenManager.clearToken();
         await account.deleteSession("current");
         setUser(null);
         setProfile(null);

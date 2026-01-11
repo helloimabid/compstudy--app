@@ -1,9 +1,11 @@
-import { account, databases, DB_ID, ID } from '@/lib/appwrite';
+import { account, ID } from '@/lib/appwrite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 export class FCMTokenManager {
   private static readonly TOKEN_KEY = 'fcm_token';
+  private static readonly TARGET_ID_KEY = 'appwrite_push_target_id';
 
   /**
    * Initialize FCM token for the current user
@@ -13,11 +15,22 @@ export class FCMTokenManager {
     try {
       // Get current user
       const currentUser = await account.get();
-      
-      // Get FCM token from expo-notifications
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: 'b8a1785f-2be9-4b89-bb99-85d4d12e5557'
-      });
+
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        const request = await Notifications.requestPermissionsAsync();
+        if (request.status !== 'granted') {
+          console.warn('Push notification permissions not granted');
+          return;
+        }
+      }
+
+      if (Platform.OS === 'web') {
+        console.warn('FCM device tokens are not available on web');
+        return;
+      }
+
+      const tokenData = await Notifications.getDevicePushTokenAsync();
       
       const token = tokenData.data;
       
@@ -29,8 +42,7 @@ export class FCMTokenManager {
       // Save token locally
       await AsyncStorage.setItem(this.TOKEN_KEY, token);
 
-      // Save token to Appwrite FCM Tokens collection
-      await this.saveTokenToAppwrite(currentUser.$id, token);
+      await this.upsertAppwritePushTarget(currentUser.$id, token);
 
       console.log('FCM token initialized successfully');
     } catch (error) {
@@ -41,48 +53,32 @@ export class FCMTokenManager {
   /**
    * Save FCM token to Appwrite FCM Tokens collection
    */
-  static async saveTokenToAppwrite(userId: string, token: string) {
+  private static async upsertAppwritePushTarget(userId: string, token: string) {
     try {
-      // Check if token already exists for this user
-      const existingTokens = await databases.listDocuments(
-        DB_ID,
-        'fcm_tokens', // This should be your FCM tokens collection name
-        [
-          // Query to check if token exists for this user
-        ]
-      );
+      const providerId = process.env.EXPO_PUBLIC_APPWRITE_FCM_PROVIDER_ID;
 
-      // If token doesn't exist, create new one
-      if (existingTokens.total === 0) {
-        await databases.createDocument(
-          DB_ID,
-          'fcm_tokens', // Collection name
-          ID.unique(),
-          {
-            userId: userId,
-            token: token,
-            platform: 'mobile', // This will be 'android' or 'ios'
-            userAgent: 'Expo Go', // or your custom app name
-            createdAt: new Date().toISOString(),
-            isActive: true
-          }
-        );
-      } else {
-        // Update existing token
-        const existingToken = existingTokens.documents[0];
-        await databases.updateDocument(
-          DB_ID,
-          'fcm_tokens',
-          existingToken.$id,
-          {
-            token: token,
-            isActive: true,
-            updatedAt: new Date().toISOString()
-          }
-        );
+      const storedTargetId = await AsyncStorage.getItem(this.TARGET_ID_KEY);
+      if (storedTargetId) {
+        try {
+          await account.updatePushTarget({
+            targetId: storedTargetId,
+            identifier: token,
+          });
+          return;
+        } catch {
+          await AsyncStorage.removeItem(this.TARGET_ID_KEY);
+        }
       }
+
+      const created = await account.createPushTarget({
+        targetId: ID.unique(),
+        identifier: token,
+        ...(providerId ? { providerId } : {}),
+      });
+
+      await AsyncStorage.setItem(this.TARGET_ID_KEY, created.$id);
     } catch (error) {
-      console.error('Failed to save FCM token to Appwrite:', error);
+      console.error('Failed to upsert Appwrite push target:', error);
     }
   }
 
@@ -103,30 +99,14 @@ export class FCMTokenManager {
    */
   static async clearToken() {
     try {
-      await AsyncStorage.removeItem(this.TOKEN_KEY);
-      
-      // Optionally deactivate token in Appwrite
-      const currentUser = await account.get();
-      const token = await this.getStoredToken();
-      
-      if (token) {
-        const existingTokens = await databases.listDocuments(
-          DB_ID,
-          'fcm_tokens',
-          [
-            // Query to find user's token
-          ]
-        );
-        
-        if (existingTokens.total > 0) {
-          await databases.updateDocument(
-            DB_ID,
-            'fcm_tokens',
-            existingTokens.documents[0].$id,
-            { isActive: false }
-          );
-        }
+      const targetId = await AsyncStorage.getItem(this.TARGET_ID_KEY);
+
+      if (targetId) {
+        await account.deletePushTarget({ targetId });
       }
+
+      await AsyncStorage.removeItem(this.TOKEN_KEY);
+      await AsyncStorage.removeItem(this.TARGET_ID_KEY);
     } catch (error) {
       console.error('Failed to clear FCM token:', error);
     }

@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "639564716189",
+    "firebase_url": "https://starter-b22ff-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "starter-b22ff",
+    "storage_bucket": "starter-b22ff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639564716189:android:ee2aa5253194032add5c74",
+        "android_client_info": {
+          "package_name": "com.compstudy.compstudy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdiVXRCkgaok3tTUbVIO0hgXYiut8PaOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639564716189:android:2b544d694bf3847cdd5c74",
+        "android_client_info": {
+          "package_name": "com.helloimabid.compstudy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdiVXRCkgaok3tTUbVIO0hgXYiut8PaOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639564716189:android:b8bd8acd7aa550d8dd5c74",
+        "android_client_info": {
+          "package_name": "com.meta.instagram"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdiVXRCkgaok3tTUbVIO0hgXYiut8PaOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
