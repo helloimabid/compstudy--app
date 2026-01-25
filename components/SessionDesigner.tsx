@@ -8,13 +8,14 @@ try {
     // Native module not available in this build
 }
 
-import { BookOpen, Clock, Coffee, Play, Plus, Save, Square, Trash2, X } from "lucide-react-native";
+import { BookOpen, Clock, Coffee, Eye, EyeOff, Play, Plus, Save, Square, Trash2, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
     Modal,
     Platform,
     ScrollView,
     StyleSheet,
+    Switch,
     Text,
     TextInput,
     TouchableOpacity,
@@ -37,6 +38,7 @@ export type SessionBlock = {
     topicId?: string;
     goal?: string;
     goals?: GoalItem[];
+    isPublic?: boolean;
 };
 
 interface SessionDesignerProps {
@@ -65,8 +67,14 @@ const getDefaultBlocks = (): SessionBlock[] => [
         type: "focus",
         duration: 25,
         subject: "",
+        isPublic: false,
     },
-    { id: Math.random().toString(36).substr(2, 9), type: "break", duration: 5 },
+    { 
+        id: Math.random().toString(36).substr(2, 9), 
+        type: "break", 
+        duration: 5,
+        isPublic: false,
+    },
 ];
 
 const getCurrentTime = () => {
@@ -117,6 +125,7 @@ export default function SessionDesigner({
                     type === "focus"
                         ? blocks.find((b) => b.subject)?.subject || ""
                         : undefined,
+                isPublic: false,
             },
         ]);
     };
@@ -465,6 +474,24 @@ export default function SessionDesigner({
                                                             </View>
                                                         </View>
                                                     )}
+
+                                                    {/* Public/Private Toggle - For all block types */}
+                                                    <View style={styles.publicToggleContainer}>
+                                                        {block.isPublic ? (
+                                                            <Eye size={14} color={Colors.dark.primary} />
+                                                        ) : (
+                                                            <EyeOff size={14} color={Colors.dark.textMuted} />
+                                                        )}
+                                                        <Text style={styles.publicToggleLabel}>
+                                                            {block.isPublic ? "Public Session" : "Private Session"}
+                                                        </Text>
+                                                        <Switch
+                                                            value={block.isPublic ?? false}
+                                                            onValueChange={(value) => updateBlock(block.id, { isPublic: value })}
+                                                            trackColor={{ false: '#374151', true: Colors.dark.primary + '40' }}
+                                                            thumbColor={block.isPublic ? Colors.dark.primary : '#9ca3af'}
+                                                        />
+                                                    </View>
                                                 </View>
                                             </View>
                                         </View>
@@ -809,6 +836,21 @@ const styles = StyleSheet.create({
     addGoalText: {
         fontSize: 12,
         color: Colors.dark.textMuted,
+    },
+    publicToggleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
+    },
+    publicToggleLabel: {
+        flex: 1,
+        fontSize: 13,
+        color: Colors.dark.text,
+        fontWeight: '500',
     },
     addButtonsContainer: {
         flexDirection: 'row',

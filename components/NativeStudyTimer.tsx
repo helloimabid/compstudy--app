@@ -80,6 +80,7 @@ export default function NativeStudyTimer() {
   const [autoStartBreak, setAutoStartBreak] = useState(false);
   const [strictMode, setStrictMode] = useState(false);
   const [targetDuration, setTargetDuration] = useState(25 * 60);
+  const [scheduledSessions, setScheduledSessions] = useState<any[]>([]);
 
   const startTimeRef = useRef<number | null>(null);
   const appState = useRef(AppState.currentState);
@@ -132,7 +133,7 @@ export default function NativeStudyTimer() {
     const fetchData = async () => {
       if (!user) return;
       try {
-        const [currRes, subjRes, topRes, peersRes] = await Promise.all([
+        const [currRes, subjRes, topRes, peersRes, scheduledRes] = await Promise.all([
           databases.listDocuments(DB_ID, COLLECTIONS.CURRICULUM, [
             Query.equal("userId", user.$id),
           ]),
@@ -146,12 +147,19 @@ export default function NativeStudyTimer() {
             Query.equal("status", "active"),
             Query.limit(1),
           ]),
+          databases.listDocuments(DB_ID, COLLECTIONS.STUDY_SESSIONS, [
+            Query.equal("userId", user.$id),
+            Query.equal("status", "scheduled"),
+            Query.orderDesc("scheduledAt"),
+            Query.limit(50),
+          ]),
         ]);
 
         setCurriculums(currRes.documents);
         setSubjects(subjRes.documents);
         setTopics(topRes.documents);
         setLivePeersCount(peersRes.total);
+        setScheduledSessions(scheduledRes.documents);
 
         if (subjRes.documents.length > 0 && !selectedSubjectId) {
           setSelectedSubjectId(subjRes.documents[0].$id);
@@ -414,26 +422,33 @@ export default function NativeStudyTimer() {
     return () => clearInterval(interval);
   }, [isActive, isPaused, duration, mode, timerMode, handleComplete]);
 
-  // Cleanup live sessions on unmount or when user changes
+  // Store latest elapsed in a ref for cleanup
+  const elapsedRef = useRef(elapsed);
+  useEffect(() => {
+    elapsedRef.current = elapsed;
+  }, [elapsed]);
+
+  // Cleanup live sessions on unmount only
   useEffect(() => {
     return () => {
-      if (liveSessionId) {
+      const sessionIdToCleanup = liveSessionId;
+      if (sessionIdToCleanup) {
         // Update status to completed and delete
-        updateLiveSession(liveSessionId, {
+        updateLiveSession(sessionIdToCleanup, {
           status: "completed",
-          elapsedTime: elapsed,
+          elapsedTime: elapsedRef.current,
         })
-          .then(() => deleteLiveSession(liveSessionId))
+          .then(() => deleteLiveSession(sessionIdToCleanup))
           .catch((error) => {
             console.error("Failed to cleanup live session on unmount:", error);
             // If update fails, try to at least delete
-            deleteLiveSession(liveSessionId).catch((e) => 
+            deleteLiveSession(sessionIdToCleanup).catch((e) => 
               console.error("Failed to delete live session on unmount:", e)
             );
           });
       }
     };
-  }, [liveSessionId, elapsed]); // Track liveSessionId and elapsed
+  }, []); // Only run on mount/unmount
 
   // AppState handling (Background/Foreground)
   useEffect(() => {
@@ -533,8 +548,13 @@ export default function NativeStudyTimer() {
         lastUpdateTime: new Date().toISOString(),
       });
     } catch (e: any) {
-      // If 404, maybe recreate? For now just log
-      console.log("Failed to update live session", e);
+      // Document not found - clear the ID to prevent repeated errors
+      if (e.code === 404 || e.message?.includes("could not be found")) {
+        console.log("Live session not found, clearing ID");
+        setLiveSessionId(null);
+      } else {
+        console.log("Failed to update live session", e);
+      }
     }
   };
 
@@ -542,8 +562,13 @@ export default function NativeStudyTimer() {
     if (!liveId) return;
     try {
       await databases.deleteDocument(DB_ID, COLLECTIONS.LIVE_SESSIONS, liveId);
-    } catch (e) {
-      console.log("Failed to delete live session", e);
+    } catch (e: any) {
+      // Silently ignore if document doesn't exist - it's already gone
+      if (e.code === 404 || e.message?.includes("could not be found")) {
+        console.log("Live session already deleted or doesn't exist");
+      } else {
+        console.log("Failed to delete live session", e);
+      }
     }
   };
 
@@ -856,7 +881,27 @@ export default function NativeStudyTimer() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setShowDesigner(true)}
+            onPress={async () => {
+              // Refetch scheduled sessions before opening
+              if (user) {
+                try {
+                  const scheduledRes = await databases.listDocuments(
+                    DB_ID,
+                    COLLECTIONS.STUDY_SESSIONS,
+                    [
+                      Query.equal("userId", user.$id),
+                      Query.equal("status", "scheduled"),
+                      Query.orderDesc("scheduledAt"),
+                      Query.limit(50),
+                    ]
+                  );
+                  setScheduledSessions(scheduledRes.documents);
+                } catch (e) {
+                  console.error("Failed to fetch scheduled sessions", e);
+                }
+              }
+              setShowDesigner(true);
+            }}
             style={styles.settingsButton}
           >
             <CalendarDays size={24} color={Colors.dark.textMuted} />
@@ -1106,10 +1151,169 @@ export default function NativeStudyTimer() {
         isOpen={showDesigner}
         onClose={() => setShowDesigner(false)}
         onSave={async (blocks, startTime) => {
-          // Save schedule to Appwrite logic here
-          // For now we just implement "Start Now" via onStartNow
-          setShowDesigner(false);
+          // Save schedule to Appwrite
+          if (!user || blocks.length === 0) {
+            setShowDesigner(false);
+            return;
+          }
+
+          try {
+            // Parse start time and create scheduled sessions
+            const [hours, minutes] = startTime.split(":").map(Number);
+            const scheduledDate = new Date();
+            scheduledDate.setHours(hours, minutes, 0, 0);
+
+            // If the time has passed today, schedule for tomorrow
+            if (scheduledDate < new Date()) {
+              scheduledDate.setDate(scheduledDate.getDate() + 1);
+            }
+
+            let currentScheduleTime = new Date(scheduledDate);
+
+            // Create a scheduled session for each block
+            for (const block of blocks) {
+              const goalData = block.goals && block.goals.length > 0
+                ? JSON.stringify(block.goals)
+                : (block.goal || null);
+
+              const sessionData: any = {
+                userId: user.$id,
+                subject:
+                  block.subject ||
+                  (block.type === "focus" ? "Focus Session" : "Break"),
+                goal: goalData,
+                type: block.type,
+                duration: block.duration * 60, // Convert to seconds
+                plannedDuration: block.duration * 60, // Store planned duration
+                startTime: currentScheduleTime.toISOString(),
+                endTime: new Date(
+                  currentScheduleTime.getTime() + block.duration * 60 * 1000
+                ).toISOString(),
+                scheduledAt: currentScheduleTime.toISOString(),
+                status: "scheduled",
+                isPublic: block.isPublic ?? false, // Use block's public setting
+                curriculumId: null, // Can be enhanced later
+                timerMode: "timer", // Default to timer mode for scheduled sessions
+              };
+
+              await databases.createDocument(
+                DB_ID,
+                COLLECTIONS.STUDY_SESSIONS,
+                ID.unique(),
+                sessionData
+              );
+
+              // Move schedule time forward by block duration
+              currentScheduleTime = new Date(
+                currentScheduleTime.getTime() + block.duration * 60 * 1000
+              );
+            }
+
+            Alert.alert(
+              "Schedule Saved!",
+              `${blocks.length} session(s) scheduled starting at ${startTime}`
+            );
+
+            // Refetch scheduled sessions to update the list
+            if (user) {
+              const scheduledRes = await databases.listDocuments(
+                DB_ID,
+                COLLECTIONS.STUDY_SESSIONS,
+                [
+                  Query.equal("userId", user.$id),
+                  Query.equal("status", "scheduled"),
+                  Query.orderDesc("scheduledAt"),
+                  Query.limit(50),
+                ]
+              );
+              setScheduledSessions(scheduledRes.documents);
+            }
+
+            setShowDesigner(false);
+          } catch (e) {
+            console.error("Failed to save schedule", e);
+            Alert.alert("Error", "Failed to save schedule. Please try again.");
+          }
         }}
+        onDeleteScheduledItem={async (id: string) => {
+          try {
+            await databases.deleteDocument(
+              DB_ID,
+              COLLECTIONS.STUDY_SESSIONS,
+              id
+            );
+
+            // Update local state
+            setScheduledSessions((prev) => prev.filter((s) => s.$id !== id));
+            Alert.alert("Success", "Scheduled session deleted");
+          } catch (e) {
+            console.error("Failed to delete scheduled session", e);
+            Alert.alert("Error", "Failed to delete session");
+          }
+        }}
+        onStartScheduledSession={async (id: string) => {
+          try {
+            const session = scheduledSessions.find((s) => s.$id === id);
+            if (!session) return;
+
+            // Set up timer with session data
+            setMode(session.type || "focus");
+            setDuration(session.plannedDuration || session.duration || 25 * 60);
+            setTargetDuration(
+              session.plannedDuration || session.duration || 25 * 60
+            );
+            setTimerMode(session.timerMode || "timer");
+
+            // Find and set subject if it exists
+            if (session.subject) {
+              const foundSubj = subjects.find((s) => s.name === session.subject);
+              if (foundSubj) {
+                setSelectedSubjectId(foundSubj.$id);
+              }
+            }
+
+            // Set goal if exists
+            if (session.goal) {
+              try {
+                const goals = JSON.parse(session.goal);
+                if (Array.isArray(goals) && goals.length > 0) {
+                  setSessionGoal(goals[0].text || "");
+                } else {
+                  setSessionGoal(session.goal);
+                }
+              } catch {
+                setSessionGoal(session.goal);
+              }
+            }
+
+            // Update session status to active and link it
+            await databases.updateDocument(
+              DB_ID,
+              COLLECTIONS.STUDY_SESSIONS,
+              id,
+              {
+                status: "active",
+                startTime: new Date().toISOString(),
+              }
+            );
+
+            setSessionId(id);
+
+            // Close designer and start timer
+            setShowDesigner(false);
+            setTimeout(() => {
+              setIsActive(true);
+              setIsPaused(false);
+            }, 500);
+          } catch (e) {
+            console.error("Failed to start scheduled session", e);
+            Alert.alert("Error", "Failed to start session");
+          }
+        }}
+        existingSchedule={scheduledSessions}
+        curriculums={curriculums}
+        subjects={subjects}
+        topics={topics}
         onStartNow={(blocks) => {
           if (blocks.length > 0) {
             const first = blocks[0];
