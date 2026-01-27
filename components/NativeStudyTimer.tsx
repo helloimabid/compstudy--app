@@ -25,7 +25,7 @@ import {
   Text,
   TouchableOpacity,
   Vibration,
-  View
+  View,
 } from "react-native";
 import { ID, Permission, Role } from "react-native-appwrite";
 import { useAuth } from "./AppwriteProvider";
@@ -97,7 +97,7 @@ export default function NativeStudyTimer() {
     () => {
       // Force stop callback - when user forces timer to stop from strict mode
       resetTimer();
-    }
+    },
   );
 
   // Load Settings
@@ -133,27 +133,28 @@ export default function NativeStudyTimer() {
     const fetchData = async () => {
       if (!user) return;
       try {
-        const [currRes, subjRes, topRes, peersRes, scheduledRes] = await Promise.all([
-          databases.listDocuments(DB_ID, COLLECTIONS.CURRICULUM, [
-            Query.equal("userId", user.$id),
-          ]),
-          databases.listDocuments(DB_ID, COLLECTIONS.SUBJECTS, [
-            Query.equal("userId", user.$id),
-          ]),
-          databases.listDocuments(DB_ID, COLLECTIONS.TOPICS, [
-            Query.equal("userId", user.$id),
-          ]),
-          databases.listDocuments(DB_ID, COLLECTIONS.LIVE_SESSIONS, [
-            Query.equal("status", "active"),
-            Query.limit(1),
-          ]),
-          databases.listDocuments(DB_ID, COLLECTIONS.STUDY_SESSIONS, [
-            Query.equal("userId", user.$id),
-            Query.equal("status", "scheduled"),
-            Query.orderDesc("scheduledAt"),
-            Query.limit(50),
-          ]),
-        ]);
+        const [currRes, subjRes, topRes, peersRes, scheduledRes] =
+          await Promise.all([
+            databases.listDocuments(DB_ID, COLLECTIONS.CURRICULUM, [
+              Query.equal("userId", user.$id),
+            ]),
+            databases.listDocuments(DB_ID, COLLECTIONS.SUBJECTS, [
+              Query.equal("userId", user.$id),
+            ]),
+            databases.listDocuments(DB_ID, COLLECTIONS.TOPICS, [
+              Query.equal("userId", user.$id),
+            ]),
+            databases.listDocuments(DB_ID, COLLECTIONS.LIVE_SESSIONS, [
+              Query.equal("status", "active"),
+              Query.limit(1),
+            ]),
+            databases.listDocuments(DB_ID, COLLECTIONS.STUDY_SESSIONS, [
+              Query.equal("userId", user.$id),
+              Query.equal("status", "scheduled"),
+              Query.orderDesc("scheduledAt"),
+              Query.limit(50),
+            ]),
+          ]);
 
         setCurriculums(currRes.documents);
         setSubjects(subjRes.documents);
@@ -172,7 +173,7 @@ export default function NativeStudyTimer() {
   }, [user]);
 
   const filteredTopics = topics.filter(
-    (t: any) => t.subjectId === selectedSubjectId
+    (t: any) => t.subjectId === selectedSubjectId,
   );
 
   // Save Settings
@@ -192,7 +193,7 @@ export default function NativeStudyTimer() {
             strictMode,
             targetDuration,
             timerMode,
-          })
+          }),
         );
       } catch (e) {
         console.error("Failed to save settings", e);
@@ -276,7 +277,7 @@ export default function NativeStudyTimer() {
               sessionId,
               liveSessionId,
               savedAt: Date.now(),
-            })
+            }),
           );
         } else {
           await AsyncStorage.removeItem("timerState");
@@ -303,7 +304,7 @@ export default function NativeStudyTimer() {
       // Cancel existing
       if (completionNotificationId.current) {
         await Notifications.cancelScheduledNotificationAsync(
-          completionNotificationId.current
+          completionNotificationId.current,
         );
         completionNotificationId.current = null;
       }
@@ -339,7 +340,7 @@ export default function NativeStudyTimer() {
       Vibration.vibrate([500, 500, 500]);
       Alert.alert(
         "Timer Finished!",
-        mode === "focus" ? "Time for a break!" : "Time to focus!"
+        mode === "focus" ? "Time for a break!" : "Time to focus!",
       );
     }
 
@@ -442,8 +443,8 @@ export default function NativeStudyTimer() {
           .catch((error) => {
             console.error("Failed to cleanup live session on unmount:", error);
             // If update fails, try to at least delete
-            deleteLiveSession(sessionIdToCleanup).catch((e) => 
-              console.error("Failed to delete live session on unmount:", e)
+            deleteLiveSession(sessionIdToCleanup).catch((e) =>
+              console.error("Failed to delete live session on unmount:", e),
             );
           });
       }
@@ -482,7 +483,7 @@ export default function NativeStudyTimer() {
           }
         }
         appState.current = nextAppState;
-      }
+      },
     );
 
     return () => {
@@ -525,7 +526,7 @@ export default function NativeStudyTimer() {
           Permission.read(Role.any()),
           Permission.update(Role.user(user.$id)),
           Permission.delete(Role.user(user.$id)),
-        ]
+        ],
       );
       return liveSession.$id;
     } catch (e) {
@@ -539,7 +540,7 @@ export default function NativeStudyTimer() {
     updates: {
       status?: "active" | "paused" | "completed";
       elapsedTime?: number;
-    }
+    },
   ) => {
     if (!liveId) return;
     try {
@@ -595,7 +596,7 @@ export default function NativeStudyTimer() {
           duration: 0,
           status: "active",
           isPublic: true,
-        }
+        },
       );
       return session.$id;
     } catch (e) {
@@ -637,7 +638,7 @@ export default function NativeStudyTimer() {
               Query.equal("userId", user.$id),
               Query.equal("status", "active"),
               Query.limit(1),
-            ]
+            ],
           );
 
           if (activeSessions.total > 0) {
@@ -666,7 +667,7 @@ export default function NativeStudyTimer() {
                       {
                         status: "completed",
                         endTime: new Date().toISOString(),
-                      }
+                      },
                     );
 
                     setIsActive(true);
@@ -678,7 +679,7 @@ export default function NativeStudyTimer() {
                   text: "Cancel",
                   style: "cancel",
                 },
-              ]
+              ],
             );
             return;
           }
@@ -768,7 +769,7 @@ export default function NativeStudyTimer() {
 
     setMode(newMode);
     setDuration(
-      newMode === "focus" ? targetDuration : autoStartBreak ? 5 * 60 : 5 * 60
+      newMode === "focus" ? targetDuration : autoStartBreak ? 5 * 60 : 5 * 60,
     ); // Simple break duration for now
   };
 
@@ -893,7 +894,7 @@ export default function NativeStudyTimer() {
                       Query.equal("status", "scheduled"),
                       Query.orderDesc("scheduledAt"),
                       Query.limit(50),
-                    ]
+                    ],
                   );
                   setScheduledSessions(scheduledRes.documents);
                 } catch (e) {
@@ -1113,8 +1114,8 @@ export default function NativeStudyTimer() {
             ? isPaused
               ? "PAUSED"
               : mode === "focus"
-              ? "FOCUSING"
-              : "BREAK"
+                ? "FOCUSING"
+                : "BREAK"
             : "READY"}
         </Text>
       </View>
@@ -1172,9 +1173,10 @@ export default function NativeStudyTimer() {
 
             // Create a scheduled session for each block
             for (const block of blocks) {
-              const goalData = block.goals && block.goals.length > 0
-                ? JSON.stringify(block.goals)
-                : (block.goal || null);
+              const goalData =
+                block.goals && block.goals.length > 0
+                  ? JSON.stringify(block.goals)
+                  : block.goal || null;
 
               const sessionData: any = {
                 userId: user.$id,
@@ -1187,7 +1189,7 @@ export default function NativeStudyTimer() {
                 plannedDuration: block.duration * 60, // Store planned duration
                 startTime: currentScheduleTime.toISOString(),
                 endTime: new Date(
-                  currentScheduleTime.getTime() + block.duration * 60 * 1000
+                  currentScheduleTime.getTime() + block.duration * 60 * 1000,
                 ).toISOString(),
                 scheduledAt: currentScheduleTime.toISOString(),
                 status: "scheduled",
@@ -1200,18 +1202,18 @@ export default function NativeStudyTimer() {
                 DB_ID,
                 COLLECTIONS.STUDY_SESSIONS,
                 ID.unique(),
-                sessionData
+                sessionData,
               );
 
               // Move schedule time forward by block duration
               currentScheduleTime = new Date(
-                currentScheduleTime.getTime() + block.duration * 60 * 1000
+                currentScheduleTime.getTime() + block.duration * 60 * 1000,
               );
             }
 
             Alert.alert(
               "Schedule Saved!",
-              `${blocks.length} session(s) scheduled starting at ${startTime}`
+              `${blocks.length} session(s) scheduled starting at ${startTime}`,
             );
 
             // Refetch scheduled sessions to update the list
@@ -1224,7 +1226,7 @@ export default function NativeStudyTimer() {
                   Query.equal("status", "scheduled"),
                   Query.orderDesc("scheduledAt"),
                   Query.limit(50),
-                ]
+                ],
               );
               setScheduledSessions(scheduledRes.documents);
             }
@@ -1240,7 +1242,7 @@ export default function NativeStudyTimer() {
             await databases.deleteDocument(
               DB_ID,
               COLLECTIONS.STUDY_SESSIONS,
-              id
+              id,
             );
 
             // Update local state
@@ -1260,13 +1262,15 @@ export default function NativeStudyTimer() {
             setMode(session.type || "focus");
             setDuration(session.plannedDuration || session.duration || 25 * 60);
             setTargetDuration(
-              session.plannedDuration || session.duration || 25 * 60
+              session.plannedDuration || session.duration || 25 * 60,
             );
             setTimerMode(session.timerMode || "timer");
 
             // Find and set subject if it exists
             if (session.subject) {
-              const foundSubj = subjects.find((s) => s.name === session.subject);
+              const foundSubj = subjects.find(
+                (s) => s.name === session.subject,
+              );
               if (foundSubj) {
                 setSelectedSubjectId(foundSubj.$id);
               }
@@ -1294,7 +1298,7 @@ export default function NativeStudyTimer() {
               {
                 status: "active",
                 startTime: new Date().toISOString(),
-              }
+              },
             );
 
             setSessionId(id);
@@ -1328,7 +1332,7 @@ export default function NativeStudyTimer() {
                 if (first.topic) {
                   const foundTopic = topics.find(
                     (t) =>
-                      t.name === first.topic && t.subjectId === foundSubj.$id
+                      t.name === first.topic && t.subjectId === foundSubj.$id,
                   );
                   if (foundTopic) setSelectedTopicId(foundTopic.$id);
                 }
@@ -1445,7 +1449,7 @@ export default function NativeStudyTimer() {
                         resetTimer();
                       },
                     },
-                  ]
+                  ],
                 );
               }}
             >

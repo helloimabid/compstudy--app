@@ -29,10 +29,7 @@
               "scheme": "compstudy"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
@@ -44,7 +41,7 @@
       ["expo-notifications"],
       [
         "expo-router",
-        
+
         {
           "root": "./app"
         }

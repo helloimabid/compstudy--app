@@ -10,12 +10,8 @@ import {
   X,
   Zap,
 } from "lucide-react-native";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import {
-    Alert,
-  AppState,
-  AppStateStatus,
-  BackHandler,
   Modal,
   ScrollView,
   StyleSheet,
