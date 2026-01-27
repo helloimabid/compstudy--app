@@ -1,5 +1,11 @@
 import { Colors } from "@/constants/Colors";
-import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
+import {
+  BUCKET_ID,
+  COLLECTIONS,
+  databases,
+  DB_ID,
+  storage,
+} from "@/lib/appwrite";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Crown, Flame, Medal, Trophy } from "lucide-react-native";
@@ -38,7 +44,7 @@ export default function LeaderboardScreen() {
       const response = await databases.listDocuments(
         DB_ID,
         COLLECTIONS.PROFILES,
-        [Query.orderDesc("totalHours"), Query.limit(50)]
+        [Query.orderDesc("totalHours"), Query.limit(50)],
       );
       setProfiles(response.documents as unknown as Profile[]);
     } catch (error) {
@@ -67,6 +73,15 @@ export default function LeaderboardScreen() {
       </SafeAreaView>
     );
   }
+
+  const getProfileImage = (fileIdOrUrl?: string) => {
+    if (!fileIdOrUrl) return null;
+    return {
+      uri: fileIdOrUrl.startsWith("http")
+        ? fileIdOrUrl
+        : storage.getFilePreview(BUCKET_ID, fileIdOrUrl).toString(),
+    };
+  };
 
   const topThree = profiles.slice(0, 3);
   const rest = profiles.slice(3);
@@ -105,7 +120,7 @@ export default function LeaderboardScreen() {
                 <View style={[styles.avatar, styles.avatarSecond]}>
                   {topThree[1].profilePicture ? (
                     <Image
-                      source={{ uri: topThree[1].profilePicture }}
+                      source={getProfileImage(topThree[1].profilePicture)}
                       style={styles.avatarImage}
                     />
                   ) : (
@@ -141,7 +156,7 @@ export default function LeaderboardScreen() {
                 <View style={[styles.avatar, styles.avatarFirst]}>
                   {topThree[0].profilePicture ? (
                     <Image
-                      source={{ uri: topThree[0].profilePicture }}
+                      source={getProfileImage(topThree[0].profilePicture)}
                       style={[styles.avatarImage, { borderRadius: 34 }]}
                     />
                   ) : (
@@ -176,7 +191,7 @@ export default function LeaderboardScreen() {
                 <View style={[styles.avatar, styles.avatarThird]}>
                   {topThree[2].profilePicture ? (
                     <Image
-                      source={{ uri: topThree[2].profilePicture }}
+                      source={getProfileImage(topThree[2].profilePicture)}
                       style={styles.avatarImage}
                     />
                   ) : (
@@ -218,13 +233,25 @@ export default function LeaderboardScreen() {
           </View>
 
           {rest.map((profile, index) => (
-            <View key={profile.$id} style={styles.listRow}>
+            <TouchableOpacity
+              key={profile.$id}
+              style={styles.listRow}
+              onPress={() => router.push(`/profile/${profile.userId}`)}
+              activeOpacity={0.7}
+            >
               <Text style={[styles.listRank, { flex: 0.5 }]}>#{index + 4}</Text>
               <View style={[styles.listUser, { flex: 2 }]}>
                 <View style={styles.listAvatar}>
-                  <Text style={styles.listAvatarText}>
-                    {profile.username[0]?.toUpperCase() || "?"}
-                  </Text>
+                  {profile.profilePicture ? (
+                    <Image
+                      source={getProfileImage(profile.profilePicture)}
+                      style={styles.listAvatarImage}
+                    />
+                  ) : (
+                    <Text style={styles.listAvatarText}>
+                      {profile.username[0]?.toUpperCase() || "?"}
+                    </Text>
+                  )}
                 </View>
                 <Text style={styles.listUsername} numberOfLines={1}>
                   {profile.username}
@@ -237,7 +264,7 @@ export default function LeaderboardScreen() {
                 <Text style={styles.listStreakText}>{profile.streak}</Text>
                 <Flame size={14} color={Colors.dark.warning} />
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
 
           {profiles.length === 0 && (

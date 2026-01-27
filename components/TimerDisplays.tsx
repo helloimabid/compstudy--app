@@ -61,7 +61,12 @@ export const DigitalTimerDisplay = ({
         <Text
             style={[
                 styles.digitalText,
-                { color: textColor, fontSize: getFontSize() },
+                { 
+                    color: textColor, 
+                    fontSize: getFontSize(),
+                    textShadowColor: themeColor === 'indigo' ? 'rgba(99, 102, 241, 0.6)' : themeColor === 'green' ? 'rgba(34, 197, 94, 0.6)' : textColor + '80', // Add glow based on theme
+                    textShadowRadius: 15,
+                },
                 fontStyleMap[timerFont],
             ]}
         >
@@ -115,6 +120,27 @@ export const CircularTimerDisplay = ({
 
     return (
         <View style={[styles.circleContainer, { width: s, height: s }]}>
+            <View style={[
+                StyleSheet.absoluteFill, 
+                { 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    transform: [{ scale: 0.9 }],
+                    opacity: 0.1 
+                }
+            ]}>
+                 <View style={{
+                     width: s,
+                     height: s,
+                     borderRadius: s / 2,
+                     backgroundColor: strokeColor,
+                     opacity: 0.2,
+                     shadowColor: strokeColor,
+                     shadowOpacity: 0.8,
+                     shadowRadius: 30,
+                     elevation: 10
+                 }} />
+            </View>
             <Svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
                 <G rotation="-90" origin={`${center}, ${center}`}>
                     {/* Background Ring */}
@@ -122,7 +148,7 @@ export const CircularTimerDisplay = ({
                         cx={center}
                         cy={center}
                         r={radius}
-                        stroke="rgba(255,255,255,0.1)"
+                        stroke="rgba(255,255,255,0.05)"
                         strokeWidth={strokeWidth}
                         fill="transparent"
                     />

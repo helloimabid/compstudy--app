@@ -9,6 +9,7 @@ import "react-native-reanimated";
 
 import { AppwriteProvider } from "@/components/AppwriteProvider";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { useInitialNotificationPermission } from "@/hooks/useInitialNotificationPermission";
 import { useOTAUpdates } from "@/hooks/useOTAUpdates";
 
@@ -19,6 +20,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   useOTAUpdates();
+  useAppUpdate();
   useInitialNotificationPermission();
 
   return (

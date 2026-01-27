@@ -42,6 +42,12 @@ export class FCMTokenManager {
       // Save token locally
       await AsyncStorage.setItem(this.TOKEN_KEY, token);
 
+      // Log token for debugging - COPY THIS TOKEN TO SEND NOTIFICATIONS
+      console.log('='.repeat(60));
+      console.log('FCM PUSH TOKEN (copy this to send notifications):');
+      console.log(token);
+      console.log('='.repeat(60));
+
       await this.upsertAppwritePushTarget(currentUser.$id, token);
 
       console.log('FCM token initialized successfully');
@@ -109,6 +115,18 @@ export class FCMTokenManager {
       await AsyncStorage.removeItem(this.TARGET_ID_KEY);
     } catch (error) {
       console.error('Failed to clear FCM token:', error);
+    }
+  }
+
+  /**
+   * Get stored FCM token
+   */
+  static async getToken(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(this.TOKEN_KEY);
+    } catch (error) {
+      console.error('Failed to get FCM token:', error);
+      return null;
     }
   }
 }

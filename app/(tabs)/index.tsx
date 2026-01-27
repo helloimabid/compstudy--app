@@ -16,7 +16,7 @@ import {
   TrendingUp,
   Trophy,
   Users,
-  Zap
+  Zap,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
@@ -67,7 +67,7 @@ export default function HomeScreen() {
       const roomResponse = await databases.listDocuments(
         DB_ID,
         COLLECTIONS.ROOMS,
-        [Query.equal("creatorId", user.$id), Query.limit(1)]
+        [Query.equal("creatorId", user.$id), Query.limit(1)],
       );
       if (roomResponse.documents.length > 0) {
         setActiveRoom(roomResponse.documents[0] as unknown as ActiveRoom);
@@ -84,9 +84,11 @@ export default function HomeScreen() {
           Query.equal("status", "completed"),
           Query.orderDesc("endTime"),
           Query.limit(5),
-        ]
+        ],
       );
-      setRecentSessions(sessionsResponse.documents as unknown as StudySession[]);
+      setRecentSessions(
+        sessionsResponse.documents as unknown as StudySession[],
+      );
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -179,9 +181,11 @@ export default function HomeScreen() {
           {/* Streak Card - Full Width */}
           <LinearGradient
             colors={
-              profile?.streak && profile.streak > 0
-                ? Colors.dark.gradients.streak
-                : ["rgba(249, 115, 22, 0.1)", "rgba(239, 68, 68, 0.05)"]
+              Colors.dark.gradients.streakCard as unknown as readonly [
+                string,
+                string,
+                ...string[],
+              ]
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -189,9 +193,18 @@ export default function HomeScreen() {
           >
             <View style={styles.cardHeader}>
               <View style={styles.headerLeft}>
-                <View style={[styles.iconBox, styles.streakIconBox]}>
+                <LinearGradient
+                  colors={
+                    Colors.dark.gradients.streak as unknown as readonly [
+                      string,
+                      string,
+                      ...string[],
+                    ]
+                  }
+                  style={[styles.streakIconBoxGradient, styles.streakIconBox]}
+                >
                   <Flame size={20} color="#fff" />
-                </View>
+                </LinearGradient>
                 <View>
                   <Text style={styles.cardLabel}>CURRENT STREAK</Text>
                   <Text style={styles.cardSubLabel}>Keep it going! 🔥</Text>
@@ -216,7 +229,13 @@ export default function HomeScreen() {
           <View style={styles.gridRow}>
             {/* Hours Card */}
             <LinearGradient
-              colors={["rgba(99, 102, 241, 0.1)", "rgba(59, 130, 246, 0.05)"]}
+              colors={
+                Colors.dark.gradients.hoursCard as unknown as readonly [
+                  string,
+                  string,
+                  ...string[],
+                ]
+              }
               style={[styles.card, styles.halfCard]}
             >
               <View style={[styles.iconBox, styles.hoursIconBox]}>
@@ -233,7 +252,13 @@ export default function HomeScreen() {
 
             {/* XP Card */}
             <LinearGradient
-              colors={["rgba(234, 179, 8, 0.1)", "rgba(245, 158, 11, 0.05)"]}
+              colors={
+                Colors.dark.gradients.xpCard as unknown as readonly [
+                  string,
+                  string,
+                  ...string[],
+                ]
+              }
               style={[styles.card, styles.halfCard]}
             >
               <View style={[styles.iconBox, styles.xpIconBox]}>
@@ -287,14 +312,22 @@ export default function HomeScreen() {
           {/* Active Room Card */}
           {activeRoom && (
             <TouchableOpacity
-              onPress={() => router.push({
-                pathname: "/room/[roomId]",
-                params: { roomId: activeRoom.roomId }
-              })}
+              onPress={() =>
+                router.push({
+                  pathname: "/room/[roomId]",
+                  params: { roomId: activeRoom.roomId },
+                })
+              }
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={["rgba(168, 85, 247, 0.15)", "rgba(236, 72, 153, 0.15)"]}
+                colors={
+                  Colors.dark.gradients.activeRoomCard as unknown as readonly [
+                    string,
+                    string,
+                    ...string[],
+                  ]
+                }
                 style={[styles.card, styles.activeRoomCard]}
               >
                 <View style={styles.cardHeader}>
@@ -321,9 +354,17 @@ export default function HomeScreen() {
                     📚 {activeRoom.subject || "General"}
                   </Text>
                   <View style={styles.enterRoomLink}>
-                    <Play size={12} color="#c084fc" style={{ marginRight: 4 }} />
+                    <Play
+                      size={12}
+                      color="#c084fc"
+                      style={{ marginRight: 4 }}
+                    />
                     <Text style={styles.enterRoomText}>Enter Room</Text>
-                    <ArrowRight size={12} color="#c084fc" style={{ marginLeft: 4 }} />
+                    <ArrowRight
+                      size={12}
+                      color="#c084fc"
+                      style={{ marginLeft: 4 }}
+                    />
                   </View>
                 </View>
               </LinearGradient>
@@ -340,21 +381,36 @@ export default function HomeScreen() {
           >
             <LinearGradient
               colors={["rgba(99, 102, 241, 0.2)", "rgba(168, 85, 247, 0.2)"]}
-              style={[styles.actionCard, { borderColor: "rgba(99, 102, 241, 0.4)" }]}
+              style={[
+                styles.actionCard,
+                { borderColor: "rgba(99, 102, 241, 0.4)" },
+              ]}
             >
-              <View style={[styles.iconBox, styles.iconBoxLarge, { backgroundColor: "rgba(99, 102, 241, 0.3)" }]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  styles.iconBoxLarge,
+                  { backgroundColor: "rgba(99, 102, 241, 0.3)" },
+                ]}
+              >
                 <Users size={24} color="#818cf8" />
               </View>
               <View style={styles.actionContent}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={styles.actionTitle}>Start Studying Together</Text>
+                  <Text style={styles.actionTitle}>
+                    Start Studying Together
+                  </Text>
                   <View style={styles.newBadge}>
                     <Text style={styles.newBadgeText}>NEW</Text>
                   </View>
                 </View>
-                <Text style={styles.actionSubtitle}>Host or join a collaborative room</Text>
+                <Text style={styles.actionSubtitle}>
+                  Host or join a collaborative room
+                </Text>
                 <View style={[styles.linkRow, { marginTop: 4 }]}>
-                  <Text style={[styles.linkText, { color: "#818cf8" }]}>Enter Hub</Text>
+                  <Text style={[styles.linkText, { color: "#818cf8" }]}>
+                    Enter Hub
+                  </Text>
                   <ArrowRight size={14} color="#818cf8" />
                 </View>
               </View>
@@ -370,14 +426,24 @@ export default function HomeScreen() {
               colors={["rgba(34, 197, 94, 0.15)", "rgba(16, 185, 129, 0.15)"]}
               style={styles.actionCard}
             >
-              <View style={[styles.iconBox, styles.iconBoxLarge, { backgroundColor: "rgba(34, 197, 94, 0.2)" }]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  styles.iconBoxLarge,
+                  { backgroundColor: "rgba(34, 197, 94, 0.2)" },
+                ]}
+              >
                 <Clock size={24} color="#4ade80" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>Solo Focus Timer</Text>
-                <Text style={styles.actionSubtitle}>Begin a personal focus session</Text>
+                <Text style={styles.actionSubtitle}>
+                  Begin a personal focus session
+                </Text>
                 <View style={[styles.linkRow, { marginTop: 4 }]}>
-                  <Text style={[styles.linkText, { color: "#4ade80" }]}>Start Focus</Text>
+                  <Text style={[styles.linkText, { color: "#4ade80" }]}>
+                    Start Focus
+                  </Text>
                   <ArrowRight size={14} color="#4ade80" />
                 </View>
               </View>
@@ -393,14 +459,22 @@ export default function HomeScreen() {
               colors={["rgba(234, 179, 8, 0.15)", "rgba(249, 115, 22, 0.15)"]}
               style={styles.actionCard}
             >
-              <View style={[styles.iconBox, styles.iconBoxLarge, styles.leaderboardIconBox]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  styles.iconBoxLarge,
+                  styles.leaderboardIconBox,
+                ]}
+              >
                 <Trophy size={24} color="#facc15" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>Leaderboards</Text>
                 <Text style={styles.actionSubtitle}>Check your ranking</Text>
                 <View style={[styles.linkRow, { marginTop: 4 }]}>
-                  <Text style={[styles.linkText, { color: "#facc15" }]}>View</Text>
+                  <Text style={[styles.linkText, { color: "#facc15" }]}>
+                    View
+                  </Text>
                   <ArrowRight size={14} color="#facc15" />
                 </View>
               </View>
@@ -416,14 +490,22 @@ export default function HomeScreen() {
               colors={["rgba(34, 197, 94, 0.15)", "rgba(16, 185, 129, 0.15)"]}
               style={styles.actionCard}
             >
-              <View style={[styles.iconBox, styles.iconBoxLarge, styles.liveIconBox]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  styles.iconBoxLarge,
+                  styles.liveIconBox,
+                ]}
+              >
                 <Sparkles size={24} color="#4ade80" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>Live Sessions</Text>
                 <Text style={styles.actionSubtitle}>See who's studying</Text>
                 <View style={[styles.linkRow, { marginTop: 4 }]}>
-                  <Text style={[styles.linkText, { color: "#4ade80" }]}>Watch</Text>
+                  <Text style={[styles.linkText, { color: "#4ade80" }]}>
+                    Watch
+                  </Text>
                   <ArrowRight size={14} color="#4ade80" />
                 </View>
               </View>
@@ -436,9 +518,13 @@ export default function HomeScreen() {
           <View style={styles.cardHeader}>
             <View style={styles.headerLeft}>
               <Calendar size={18} color="#818cf8" />
-              <Text style={[styles.cardTitle, { fontSize: 16, marginLeft: 8 }]}>Recent Activity</Text>
+              <Text style={[styles.cardTitle, { fontSize: 16, marginLeft: 8 }]}>
+                Recent Activity
+              </Text>
             </View>
-            <TouchableOpacity onPress={() => router.push(`/profile/${user.$id}`)}>
+            <TouchableOpacity
+              onPress={() => router.push(`/profile/${user.$id}`)}
+            >
               <View style={styles.linkRow}>
                 <Text style={styles.smallLinkText}>View All</Text>
                 <ChevronRight size={14} color={Colors.dark.textMuted} />
@@ -453,38 +539,40 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            recentSessions.slice(0, 3).map((session) => (
-              <View key={session.$id} style={styles.activityRow}>
-                <View style={styles.activityLeft}>
-                  <View
-                    style={[
-                      styles.activityIcon,
-                      session.type === "break"
-                        ? styles.breakIconBg
-                        : styles.focusIconBg,
-                    ]}
-                  >
-                    <Text style={{ fontSize: 16 }}>
-                      {session.type === "break" ? "☕" : "🎯"}
-                    </Text>
+            <View style={{ gap: 8, marginTop: 16 }}>
+              {recentSessions.slice(0, 3).map((session) => (
+                <View key={session.$id} style={styles.activityItem}>
+                  <View style={styles.activityLeft}>
+                    <View
+                      style={[
+                        styles.activityIcon,
+                        session.type === "break"
+                          ? styles.breakIconBg
+                          : styles.focusIconBg,
+                      ]}
+                    >
+                      <Text style={{ fontSize: 16 }}>
+                        {session.type === "break" ? "☕" : "🎯"}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.activitySubject}>
+                        {session.subject || "Study Session"}
+                      </Text>
+                      <Text style={styles.activityDuration}>
+                        {Math.floor(session.duration / 60)} minutes
+                      </Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.activitySubject}>
-                      {session.subject || "Study Session"}
-                    </Text>
-                    <Text style={styles.activityDuration}>
-                      {Math.floor(session.duration / 60)} minutes
-                    </Text>
-                  </View>
+                  <Text style={styles.activityTime}>
+                    {new Date(session.endTime).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </Text>
                 </View>
-                <Text style={styles.activityTime}>
-                  {new Date(session.endTime).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </Text>
-              </View>
-            ))
+              ))}
+            </View>
           )}
         </View>
 
@@ -644,11 +732,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   streakIconBox: {
-    backgroundColor: "rgba(249, 115, 22, 1)", // solid orange equivalent to gradient start
     shadowColor: "#f97316",
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
+  },
+  streakIconBoxGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
   hoursIconBox: { backgroundColor: "rgba(99, 102, 241, 0.2)" },
   xpIconBox: { backgroundColor: "rgba(234, 179, 8, 0.2)" },
@@ -809,13 +903,13 @@ const styles = StyleSheet.create({
   emptyStateText: {
     color: Colors.dark.textMuted,
   },
-  activityRow: {
+  activityItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   activityLeft: {
     flexDirection: "row",

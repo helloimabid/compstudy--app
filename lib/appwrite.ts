@@ -1,4 +1,4 @@
-import { Account, Client, Databases, ID, Permission, Query, Role, Storage } from 'react-native-appwrite';
+import { Account, Avatars, Client, Databases, ID, Permission, Query, Role, Storage } from 'react-native-appwrite';
 import 'react-native-url-polyfill/auto';
 
 const client = new Client();
@@ -14,6 +14,7 @@ client
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
+export const avatars = new Avatars(client);
 export { client, ID, Permission, Query, Role };
 
 export const DB_ID = 'compstudy-db';
@@ -42,4 +43,5 @@ export const COLLECTIONS = {
     NEWSLETTER_SUBSCRIBERS: 'newsletter_subscribers',
     BLOG_POSTS: 'blog_posts',
     FCM_TOKENS: 'fcm_tokens',
+    PUSH_TOKENS: 'push_tokens',
 };

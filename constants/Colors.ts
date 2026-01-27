@@ -19,6 +19,11 @@ export const Colors = {
             streak: ["#f97316", "#ef4444"] as const, // orange-500 to red-500
             success: ["#22c55e", "#10b981"] as const,
             gold: ["#fbbf24", "#d97706"] as const,
+            // Subtle backgrounds matching web
+            streakCard: ["rgba(249, 115, 22, 0.1)", "rgba(239, 68, 68, 0.05)"],
+            hoursCard: ["rgba(99, 102, 241, 0.1)", "rgba(59, 130, 246, 0.05)"],
+            xpCard: ["rgba(234, 179, 8, 0.1)", "rgba(245, 158, 11, 0.05)"],
+            activeRoomCard: ["rgba(168, 85, 247, 0.15)", "rgba(236, 72, 153, 0.15)"],
         }
     },
 };

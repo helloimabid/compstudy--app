@@ -47,3 +47,7 @@ app-example
 @holaimabids-organization__compstudy.jks
 credentials.json
 .gitignore
+
+/appwrite-functions
+
+FCM_USAGE_EXAMPLE.ts
