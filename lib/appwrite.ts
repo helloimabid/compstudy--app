@@ -44,4 +44,7 @@ export const COLLECTIONS = {
     BLOG_POSTS: 'blog_posts',
     FCM_TOKENS: 'fcm_tokens',
     PUSH_TOKENS: 'push_tokens',
+    // Spaced Repetition Collections
+    SPACED_REPETITION: 'spaced_repetition',
+    USER_SR_SETTINGS: 'user_sr_settings',
 };
