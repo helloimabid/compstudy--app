@@ -1082,32 +1082,34 @@ export default function NativeStudyTimer() {
 
       {/* Timer Display */}
       <View style={styles.timerDisplayContainer}>
-        {timerStyle === "grid" || timerStyle === "digital" ? (
-          <DigitalTimerDisplay
-            time={displayTimeStr}
-            themeColor={themeColor}
-            isBreak={mode === "break"}
-            size="lg"
-            timerFont={timerFont}
+        {/* Progress Bar */}
+        <View
+          style={{
+            width: "85%",
+            height: 6,
+            backgroundColor: activeColor + "20",
+            borderRadius: 3,
+            marginBottom: 32,
+            overflow: "hidden",
+            alignSelf: "center",
+          }}
+        >
+          <View
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              backgroundColor: activeColor,
+              borderRadius: 3,
+            }}
           />
-        ) : timerStyle === "circular" ? (
-          <CircularTimerDisplay
-            time={displayTimeStr}
-            progress={progress}
-            themeColor={themeColor}
-            isBreak={mode === "break"}
-            size="md"
-            timerFont={timerFont}
-          />
-        ) : (
-          <MinimalTimerDisplay
-            time={displayTimeStr}
-            themeColor={themeColor}
-            isBreak={mode === "break"}
-            size="md"
-            timerFont={timerFont}
-          />
-        )}
+        </View>
+
+        <DigitalTimerDisplay
+          time={displayTimeStr}
+          themeColor={themeColor}
+          isBreak={mode === "break"}
+          size="lg"
+        />
 
         <Text style={[styles.statusText, { color: activeColor }]}>
           {isActive

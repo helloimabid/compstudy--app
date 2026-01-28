@@ -1,10 +1,11 @@
 import { Colors } from "@/constants/Colors";
 import {
   Clock,
-  Layout,
+  Minus,
   Palette,
+  Plus,
   Repeat,
-  Type,
+  Timer,
   Volume2,
   VolumeX,
   X,
@@ -13,11 +14,10 @@ import {
 import React from "react";
 import {
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -75,9 +75,18 @@ const THEMES: { id: ThemeColor; name: string; color: string }[] = [
 ];
 
 const PRESETS = [
-  { name: "Pomodoro", focus: 25, break: 5 },
-  { name: "Deep Work", focus: 50, break: 10 },
-  { name: "Quick Sprint", focus: 15, break: 3 },
+  { name: "Pomodoro", focus: 25, description: "Classic 25 min focus" },
+  { name: "Deep Work", focus: 50, description: "Extended 50 min focus" },
+  { name: "Quick Sprint", focus: 15, description: "Short 15 min burst" },
+];
+
+const FONTS: { id: TimerFont; name: string }[] = [
+  { id: "default", name: "Default" },
+  { id: "orbitron", name: "Orbitron" },
+  { id: "quantico", name: "Quantico" },
+  { id: "audiowide", name: "Audiowide" },
+  { id: "electrolize", name: "Electrolize" },
+  { id: "zendots", name: "Zen Dots" },
 ];
 
 export default function TimerSettings({
@@ -115,46 +124,55 @@ export default function TimerSettings({
     setTargetDuration(total > 0 ? total : 60); // Minimum 1 minute
   };
 
+  const activeTheme = THEMES.find((t) => t.id === themeColor) || THEMES[0];
+
   return (
     <Modal
       visible={isOpen}
       animationType="slide"
       transparent={true}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View style={styles.modalOverlay}>
+      {/* Backdrop */}
+      <Pressable style={styles.backdrop} onPress={onClose} />
+
+      {/* Modal Content */}
+      <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
+          {/* Handle Indicator */}
+          <View style={styles.handleContainer}>
+            <View style={styles.handle} />
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleContainer}>
               <View
                 style={[
                   styles.headerIndicator,
-                  {
-                    backgroundColor:
-                      THEMES.find((t) => t.id === themeColor)?.color ||
-                      Colors.dark.primary,
-                  },
+                  { backgroundColor: activeTheme.color },
                 ]}
               />
               <Text style={styles.headerTitle}>System Configuration</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color={Colors.dark.textMuted} />
+              <X size={20} color={Colors.dark.textMuted} />
             </TouchableOpacity>
           </View>
 
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
             {/* Theme Selection */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Palette size={16} color={Colors.dark.textMuted} />
+                <Palette size={14} color={Colors.dark.textMuted} />
                 <Text style={styles.sectionTitle}>Interface Theme</Text>
               </View>
-              <View style={styles.gridContainer}>
+              <View style={styles.themeGrid}>
                 {THEMES.map((theme) => (
                   <TouchableOpacity
                     key={theme.id}
@@ -162,43 +180,28 @@ export default function TimerSettings({
                     style={[
                       styles.themeButton,
                       themeColor === theme.id && styles.themeButtonActive,
+                      themeColor === theme.id && {
+                        borderColor: theme.color + "40",
+                      },
                     ]}
+                    activeOpacity={0.7}
                   >
                     <View
                       style={[
                         styles.colorDot,
-                        { backgroundColor: theme.color },
+                        {
+                          backgroundColor: theme.color,
+                          shadowColor: theme.color,
+                        },
                       ]}
                     />
-                    <Text style={styles.themeName}>{theme.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Visual Mode */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Layout size={16} color={Colors.dark.textMuted} />
-                <Text style={styles.sectionTitle}>Visual Mode</Text>
-              </View>
-              <View style={styles.segmentControl}>
-                {(["grid", "minimal", "cyber"] as VisualMode[]).map((m) => (
-                  <TouchableOpacity
-                    key={m}
-                    onPress={() => setVisualMode(m)}
-                    style={[
-                      styles.segmentButton,
-                      visualMode === m && styles.segmentButtonActive,
-                    ]}
-                  >
                     <Text
                       style={[
-                        styles.segmentText,
-                        visualMode === m && styles.segmentTextActive,
+                        styles.themeName,
+                        themeColor === theme.id && { color: "#fff" },
                       ]}
                     >
-                      {m}
+                      {theme.name}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -208,7 +211,7 @@ export default function TimerSettings({
             {/* Timer Mode */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Clock size={16} color={Colors.dark.textMuted} />
+                <Timer size={14} color={Colors.dark.textMuted} />
                 <Text style={styles.sectionTitle}>Timer Mode</Text>
               </View>
               <View style={styles.segmentControl}>
@@ -218,13 +221,20 @@ export default function TimerSettings({
                     onPress={() => setTimerMode(m)}
                     style={[
                       styles.segmentButton,
-                      timerMode === m && styles.segmentButtonActive,
+                      timerMode === m && [
+                        styles.segmentButtonActive,
+                        { backgroundColor: activeTheme.color + "20" },
+                      ],
                     ]}
+                    activeOpacity={0.7}
                   >
                     <Text
                       style={[
                         styles.segmentText,
-                        timerMode === m && styles.segmentTextActive,
+                        timerMode === m && {
+                          color: activeTheme.color,
+                          fontWeight: "700",
+                        },
                       ]}
                     >
                       {m}
@@ -234,44 +244,14 @@ export default function TimerSettings({
               </View>
             </View>
 
-            {/* Timer Style */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Type size={16} color={Colors.dark.textMuted} />
-                <Text style={styles.sectionTitle}>Timer Style</Text>
-              </View>
-              <View style={styles.gridContainer}>
-                {(
-                  ["grid", "digital", "circular", "minimal"] as TimerStyle[]
-                ).map((style) => (
-                  <TouchableOpacity
-                    key={style}
-                    onPress={() => setTimerStyle(style)}
-                    style={[
-                      styles.styleButton,
-                      timerStyle === style && styles.styleButtonActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.styleButtonText,
-                        timerStyle === style && styles.styleButtonTextActive,
-                      ]}
-                    >
-                      {style}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
             {/* Automation */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Repeat size={16} color={Colors.dark.textMuted} />
+                <Zap size={14} color={Colors.dark.textMuted} />
                 <Text style={styles.sectionTitle}>Automation</Text>
               </View>
 
+              {/* Auto-start Break */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <View
@@ -279,38 +259,45 @@ export default function TimerSettings({
                       styles.iconBox,
                       {
                         backgroundColor: autoStartBreak
-                          ? "rgba(34, 197, 94, 0.1)"
-                          : Colors.dark.surface,
+                          ? "rgba(34, 197, 94, 0.15)"
+                          : "rgba(255,255,255,0.05)",
                       },
                     ]}
                   >
                     <Repeat
                       size={20}
-                      color={
-                        autoStartBreak
-                          ? Colors.dark.success
-                          : Colors.dark.textMuted
-                      }
+                      color={autoStartBreak ? "#22c55e" : Colors.dark.textMuted}
                     />
                   </View>
-                  <View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Auto-start Break</Text>
                     <Text style={styles.settingDescription}>
                       Start break when focus ends
                     </Text>
                   </View>
                 </View>
-                <Switch
-                  value={autoStartBreak}
-                  onValueChange={setAutoStartBreak}
-                  trackColor={{
-                    false: Colors.dark.surfaceHighlight,
-                    true: Colors.dark.success,
-                  }}
-                  thumbColor="#fff"
-                />
+                <TouchableOpacity
+                  onPress={() => setAutoStartBreak(!autoStartBreak)}
+                  style={[
+                    styles.customSwitch,
+                    {
+                      backgroundColor: autoStartBreak
+                        ? "#22c55e"
+                        : "rgba(255,255,255,0.1)",
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <View
+                    style={[
+                      styles.switchThumb,
+                      { left: autoStartBreak ? 22 : 2 },
+                    ]}
+                  />
+                </TouchableOpacity>
               </View>
 
+              {/* Auto-start Focus */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <View
@@ -318,8 +305,8 @@ export default function TimerSettings({
                       styles.iconBox,
                       {
                         backgroundColor: autoStartFocus
-                          ? "rgba(99, 102, 241, 0.1)"
-                          : Colors.dark.surface,
+                          ? activeTheme.color + "20"
+                          : "rgba(255,255,255,0.05)",
                       },
                     ]}
                   >
@@ -327,29 +314,40 @@ export default function TimerSettings({
                       size={20}
                       color={
                         autoStartFocus
-                          ? Colors.dark.primary
+                          ? activeTheme.color
                           : Colors.dark.textMuted
                       }
                     />
                   </View>
-                  <View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Auto-start Focus</Text>
                     <Text style={styles.settingDescription}>
                       Start focus when break ends
                     </Text>
                   </View>
                 </View>
-                <Switch
-                  value={autoStartFocus}
-                  onValueChange={setAutoStartFocus}
-                  trackColor={{
-                    false: Colors.dark.surfaceHighlight,
-                    true: Colors.dark.primary,
-                  }}
-                  thumbColor="#fff"
-                />
+                <TouchableOpacity
+                  onPress={() => setAutoStartFocus(!autoStartFocus)}
+                  style={[
+                    styles.customSwitch,
+                    {
+                      backgroundColor: autoStartFocus
+                        ? activeTheme.color
+                        : "rgba(255,255,255,0.1)",
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <View
+                    style={[
+                      styles.switchThumb,
+                      { left: autoStartFocus ? 22 : 2 },
+                    ]}
+                  />
+                </TouchableOpacity>
               </View>
 
+              {/* Strict Mode */}
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <View
@@ -357,8 +355,8 @@ export default function TimerSettings({
                       styles.iconBox,
                       {
                         backgroundColor: strictMode
-                          ? "rgba(239, 68, 68, 0.1)"
-                          : Colors.dark.surface,
+                          ? "rgba(239, 68, 68, 0.15)"
+                          : "rgba(255,255,255,0.05)",
                       },
                     ]}
                   >
@@ -367,79 +365,168 @@ export default function TimerSettings({
                       color={strictMode ? "#ef4444" : Colors.dark.textMuted}
                     />
                   </View>
-                  <View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Strict Mode</Text>
                     <Text style={styles.settingDescription}>
                       Prevent exiting while focusing
                     </Text>
                   </View>
                 </View>
-                <Switch
-                  value={strictMode}
-                  onValueChange={setStrictMode}
-                  trackColor={{
-                    false: Colors.dark.surfaceHighlight,
-                    true: "#ef4444",
-                  }}
-                  thumbColor="#fff"
-                />
+                <TouchableOpacity
+                  onPress={() => setStrictMode(!strictMode)}
+                  style={[
+                    styles.customSwitch,
+                    {
+                      backgroundColor: strictMode
+                        ? "#ef4444"
+                        : "rgba(255,255,255,0.1)",
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <View
+                    style={[styles.switchThumb, { left: strictMode ? 22 : 2 }]}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
             {/* Custom Duration */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Clock size={16} color={Colors.dark.textMuted} />
-                <Text style={styles.sectionTitle}>Custom Duration</Text>
+                <Clock size={14} color={Colors.dark.textMuted} />
+                <Text style={styles.sectionTitle}>Custom Timer Duration</Text>
               </View>
               <View style={styles.durationContainer}>
-                <View style={styles.timeColumn}>
-                  <Text style={styles.timeLabel}>Hours</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={hours.toString()}
-                    onChangeText={(text) =>
-                      updateDuration(parseInt(text) || 0, minutes, seconds)
-                    }
-                    keyboardType="number-pad"
-                  />
+                <View style={styles.durationRow}>
+                  {/* Hours */}
+                  <View style={styles.timeColumn}>
+                    <Text style={styles.timeLabel}>Hours</Text>
+                    <View style={styles.timeControls}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(hours + 1, minutes, seconds)
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Plus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                      <View style={styles.timeInputContainer}>
+                        <Text style={styles.timeValue}>
+                          {hours.toString().padStart(2, "0")}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(
+                            Math.max(0, hours - 1),
+                            minutes,
+                            seconds,
+                          )
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Minus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <Text style={styles.timeSeparator}>:</Text>
+
+                  {/* Minutes */}
+                  <View style={styles.timeColumn}>
+                    <Text style={styles.timeLabel}>Minutes</Text>
+                    <View style={styles.timeControls}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(
+                            hours,
+                            Math.min(59, minutes + 1),
+                            seconds,
+                          )
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Plus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                      <View style={styles.timeInputContainer}>
+                        <Text style={styles.timeValue}>
+                          {minutes.toString().padStart(2, "0")}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(
+                            hours,
+                            Math.max(0, minutes - 1),
+                            seconds,
+                          )
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Minus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <Text style={styles.timeSeparator}>:</Text>
+
+                  {/* Seconds */}
+                  <View style={styles.timeColumn}>
+                    <Text style={styles.timeLabel}>Seconds</Text>
+                    <View style={styles.timeControls}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(
+                            hours,
+                            minutes,
+                            Math.min(59, seconds + 1),
+                          )
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Plus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                      <View style={styles.timeInputContainer}>
+                        <Text style={styles.timeValue}>
+                          {seconds.toString().padStart(2, "0")}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateDuration(
+                            hours,
+                            minutes,
+                            Math.max(0, seconds - 1),
+                          )
+                        }
+                        style={styles.timeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Minus size={18} color={Colors.dark.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.timeSeparator}>:</Text>
-                <View style={styles.timeColumn}>
-                  <Text style={styles.timeLabel}>Minutes</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={minutes.toString()}
-                    onChangeText={(text) =>
-                      updateDuration(hours, parseInt(text) || 0, seconds)
-                    }
-                    keyboardType="number-pad"
-                  />
-                </View>
-                <Text style={styles.timeSeparator}>:</Text>
-                <View style={styles.timeColumn}>
-                  <Text style={styles.timeLabel}>Seconds</Text>
-                  <TextInput
-                    style={styles.timeInput}
-                    value={seconds.toString()}
-                    onChangeText={(text) =>
-                      updateDuration(hours, minutes, parseInt(text) || 0)
-                    }
-                    keyboardType="number-pad"
-                  />
-                </View>
+
+                <Text style={styles.durationSummary}>
+                  Total: {hours > 0 ? `${hours}h ` : ""}
+                  {minutes > 0 ? `${minutes}m ` : ""}
+                  {seconds > 0 ? `${seconds}s` : ""}
+                  {hours === 0 && minutes === 0 && seconds === 0 ? "0s" : ""}
+                </Text>
               </View>
-              <Text style={styles.durationSummary}>
-                Total: {hours > 0 ? `${hours}h ` : ""}
-                {minutes > 0 ? `${minutes}m ` : ""}
-                {seconds > 0 ? `${seconds}s` : ""}
-              </Text>
             </View>
 
-            {/* Presets */}
+            {/* Quick Presets */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Clock size={16} color={Colors.dark.textMuted} />
+                <Clock size={14} color={Colors.dark.textMuted} />
                 <Text style={styles.sectionTitle}>Quick Presets</Text>
               </View>
               <View style={styles.presetsContainer}>
@@ -451,11 +538,27 @@ export default function TimerSettings({
                       onClose();
                     }}
                     style={styles.presetButton}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.presetName}>{preset.name}</Text>
-                    <View style={styles.presetBadge}>
-                      <Text style={styles.presetBadgeText}>
-                        {preset.focus}m Focus
+                    <View>
+                      <Text style={styles.presetName}>{preset.name}</Text>
+                      <Text style={styles.presetDescription}>
+                        {preset.description}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.presetBadge,
+                        { backgroundColor: activeTheme.color + "20" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.presetBadgeText,
+                          { color: activeTheme.color },
+                        ]}
+                      >
+                        {preset.focus}m
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -464,9 +567,9 @@ export default function TimerSettings({
             </View>
 
             {/* Sound Settings */}
-            <View style={styles.section}>
+            <View style={[styles.section, { marginBottom: 40 }]}>
               <View style={styles.sectionHeader}>
-                <Volume2 size={16} color={Colors.dark.textMuted} />
+                <Volume2 size={14} color={Colors.dark.textMuted} />
                 <Text style={styles.sectionTitle}>Audio Feedback</Text>
               </View>
               <View style={styles.settingRow}>
@@ -476,33 +579,43 @@ export default function TimerSettings({
                       styles.iconBox,
                       {
                         backgroundColor: soundEnabled
-                          ? "rgba(99, 102, 241, 0.1)"
-                          : Colors.dark.surface,
+                          ? activeTheme.color + "20"
+                          : "rgba(255,255,255,0.05)",
                       },
                     ]}
                   >
                     {soundEnabled ? (
-                      <Volume2 size={20} color={Colors.dark.primary} />
+                      <Volume2 size={20} color={activeTheme.color} />
                     ) : (
                       <VolumeX size={20} color={Colors.dark.textMuted} />
                     )}
                   </View>
-                  <View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingLabel}>Sound Effects</Text>
                     <Text style={styles.settingDescription}>
                       Timer ticks and completion alarms
                     </Text>
                   </View>
                 </View>
-                <Switch
-                  value={soundEnabled}
-                  onValueChange={setSoundEnabled}
-                  trackColor={{
-                    false: Colors.dark.surfaceHighlight,
-                    true: Colors.dark.primary,
-                  }}
-                  thumbColor="#fff"
-                />
+                <TouchableOpacity
+                  onPress={() => setSoundEnabled(!soundEnabled)}
+                  style={[
+                    styles.customSwitch,
+                    {
+                      backgroundColor: soundEnabled
+                        ? activeTheme.color
+                        : "rgba(255,255,255,0.1)",
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <View
+                    style={[
+                      styles.switchThumb,
+                      { left: soundEnabled ? 22 : 2 },
+                    ]}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
@@ -513,30 +626,43 @@ export default function TimerSettings({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    justifyContent: "flex-end",
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  modalContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    maxHeight: "90%",
   },
   modalContent: {
-    backgroundColor: "#09090b", // Slightly lighter than pure black
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    height: "88%",
+    backgroundColor: "#0a0a0a",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "100%",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 20,
+    borderBottomWidth: 0,
+  },
+  handleContainer: {
+    alignItems: "center",
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 2,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 28,
-    paddingVertical: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.05)",
   },
@@ -546,15 +672,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerIndicator: {
-    width: 4,
-    height: 24,
-    borderRadius: 4,
+    width: 3,
+    height: 20,
+    borderRadius: 2,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: "#fff",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   closeButton: {
     padding: 8,
@@ -566,8 +692,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 64,
-    gap: 36,
+    gap: 32,
   },
   section: {
     gap: 16,
@@ -575,66 +700,67 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 4,
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#a1a1aa",
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#71717a",
     textTransform: "uppercase",
-    letterSpacing: 1.5,
+    letterSpacing: 1,
   },
-  gridContainer: {
+
+  // Theme Grid
+  themeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 10,
   },
   themeButton: {
     flexDirection: "row",
     alignItems: "center",
     width: "48%",
     padding: 14,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(255,255,255,0.02)",
-    gap: 12,
+    gap: 10,
   },
   themeButtonActive: {
     backgroundColor: "rgba(255,255,255,0.08)",
-    borderColor: "rgba(255,255,255,0.2)",
   },
   colorDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    shadowColor: "#000", // Shadow for dot
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
   },
   themeName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    color: "#f4f4f5",
+    color: "#a1a1aa",
   },
+
+  // Segment Control
   segmentControl: {
     flexDirection: "row",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 14,
     padding: 4,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.06)",
   },
   segmentButton: {
     flex: 1,
     paddingVertical: 12,
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 10,
   },
   segmentButtonActive: {
-    backgroundColor: "rgba(255,255,255,0.1)",
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -642,19 +768,22 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 13,
-    color: "#a1a1aa",
-    fontWeight: "600",
+    color: "#71717a",
+    fontWeight: "500",
     textTransform: "capitalize",
   },
-  segmentTextActive: {
-    color: "#fff",
-    fontWeight: "700",
+
+  // Style Grid
+  styleGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
   styleButton: {
     width: "48%",
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(255,255,255,0.02)",
@@ -662,122 +791,199 @@ const styles = StyleSheet.create({
   },
   styleButtonActive: {
     backgroundColor: "rgba(255,255,255,0.08)",
-    borderColor: "rgba(255,255,255,0.2)",
   },
   styleButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#a1a1aa",
     textTransform: "capitalize",
     fontWeight: "500",
   },
-  styleButtonTextActive: {
-    color: "#fff",
-    fontWeight: "600",
+
+  // Font Grid
+  fontGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
+  fontButton: {
+    width: "48%",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    alignItems: "center",
+    gap: 4,
+  },
+  fontButtonActive: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  fontPreview: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#a1a1aa",
+    fontVariant: ["tabular-nums"],
+  },
+  fontName: {
+    fontSize: 11,
+    color: "#71717a",
+  },
+
+  // Settings Row
   settingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 18,
+    padding: 16,
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-    marginBottom: 8,
+    borderColor: "rgba(255,255,255,0.05)",
   },
   settingInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
+    flex: 1,
+  },
+  settingTextContainer: {
     flex: 1,
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
   },
   settingLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
-    color: Colors.dark.text,
+    color: "#fff",
   },
   settingDescription: {
     fontSize: 12,
-    color: Colors.dark.textMuted,
+    color: "#71717a",
     marginTop: 2,
   },
+
+  // Custom Switch
+  customSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+  },
+  switchThumb: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  // Duration
   durationContainer: {
+    padding: 20,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+  },
+  durationRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-    backgroundColor: Colors.dark.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-    gap: 12,
   },
   timeColumn: {
     alignItems: "center",
   },
   timeLabel: {
     fontSize: 10,
-    color: Colors.dark.textMuted,
+    color: "#71717a",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
     marginBottom: 8,
   },
-  timeInput: {
-    width: 60,
-    height: 60,
-    backgroundColor: Colors.dark.background,
+  timeControls: {
+    alignItems: "center",
+    gap: 6,
+  },
+  timeButton: {
+    width: 48,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 8,
+  },
+  timeInputContainer: {
+    width: 56,
+    height: 56,
+    backgroundColor: "#18181b",
     borderRadius: 12,
-    color: Colors.dark.text,
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.dark.border,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  timeValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#fff",
+    fontVariant: ["tabular-nums"],
   },
   timeSeparator: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: Colors.dark.textMuted,
-    marginTop: 16,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#3f3f46",
+    marginHorizontal: 8,
+    marginTop: 24,
   },
   durationSummary: {
     textAlign: "center",
     fontSize: 13,
-    color: Colors.dark.textMuted,
-    marginTop: 8,
+    color: "#71717a",
+    marginTop: 16,
   },
+
+  // Presets
   presetsContainer: {
-    gap: 12,
+    gap: 10,
   },
   presetButton: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: Colors.dark.surface,
-    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.dark.border,
+    borderColor: "rgba(255,255,255,0.05)",
   },
   presetName: {
     fontSize: 14,
-    fontWeight: "500",
-    color: Colors.dark.text,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  presetDescription: {
+    fontSize: 12,
+    color: "#71717a",
+    marginTop: 2,
   },
   presetBadge: {
-    backgroundColor: Colors.dark.surfaceHighlight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   presetBadgeText: {
-    fontSize: 12,
-    color: Colors.dark.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
