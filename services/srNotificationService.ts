@@ -5,7 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { ExpoPushTokenManager, scheduleLocalNotification, cancelAllScheduledNotifications } from './expoPushNotifications';
+import { scheduleLocalNotification } from './expoPushNotifications';
 
 // Storage key for scheduled notification IDs
 const SR_NOTIFICATION_IDS_KEY = 'sr_scheduled_notification_ids';

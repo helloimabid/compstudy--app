@@ -17,10 +17,7 @@ import {
   updateSRItemStatus,
   updateUserSRSettings,
 } from "@/services/spacedRepetitionService";
-import {
-  updateSRNotifications,
-  sendImmediateDueNotification,
-} from "@/services/srNotificationService";
+import { updateSRNotifications } from "@/services/srNotificationService";
 import {
   DEFAULT_SR_SETTINGS,
   ReviewQuality,
@@ -248,7 +245,7 @@ export function SpacedRepetitionProvider({
       updateSRNotifications(
         pushEnabled,
         settings.reminderTime,
-        settings.weekendReminders
+        settings.weekendReminders,
       ).catch(console.error);
     }
   }, [settings]);
@@ -369,11 +366,17 @@ export function SpacedRepetitionProvider({
           setSettings(result);
 
           // Update push notifications based on new settings
-          const pushEnabled = data.pushRemindersEnabled ?? result.pushRemindersEnabled ?? true;
+          const pushEnabled =
+            data.pushRemindersEnabled ?? result.pushRemindersEnabled ?? true;
           const reminderTime = data.reminderTime ?? result.reminderTime;
-          const weekendReminders = data.weekendReminders ?? result.weekendReminders;
-          
-          await updateSRNotifications(pushEnabled, reminderTime, weekendReminders);
+          const weekendReminders =
+            data.weekendReminders ?? result.weekendReminders;
+
+          await updateSRNotifications(
+            pushEnabled,
+            reminderTime,
+            weekendReminders,
+          );
 
           return true;
         }

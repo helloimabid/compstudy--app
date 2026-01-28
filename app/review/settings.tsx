@@ -104,7 +104,8 @@ export default function SettingsScreen() {
 
     const changed =
       formData.emailRemindersEnabled !== settings.emailRemindersEnabled ||
-      formData.pushRemindersEnabled !== (settings.pushRemindersEnabled ?? true) ||
+      formData.pushRemindersEnabled !==
+        (settings.pushRemindersEnabled ?? true) ||
       formData.reminderTime !== settings.reminderTime ||
       formData.timezone !== settings.timezone ||
       formData.maxDailyReviews !== settings.maxDailyReviews ||
@@ -419,7 +420,9 @@ export default function SettingsScreen() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                >
                   <Smartphone size={16} color={Colors.dark.textMuted} />
                   <Text style={styles.settingLabel}>Push notifications</Text>
                 </View>
@@ -432,12 +435,14 @@ export default function SettingsScreen() {
                 onValueChange={async (v) => {
                   if (v) {
                     // Request permission when enabling
-                    const token = await ExpoPushTokenManager.initializeToken(user?.$id);
+                    const token = await ExpoPushTokenManager.initializeToken(
+                      user?.$id,
+                    );
                     if (!token) {
                       Alert.alert(
-                        'Permission Required',
-                        'Please enable notifications in your device settings to receive review reminders.',
-                        [{ text: 'OK' }]
+                        "Permission Required",
+                        "Please enable notifications in your device settings to receive review reminders.",
+                        [{ text: "OK" }],
                       );
                       return;
                     }
