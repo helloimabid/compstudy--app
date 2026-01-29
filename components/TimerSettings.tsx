@@ -1,10 +1,12 @@
 import { Colors } from "@/constants/Colors";
 import {
+  ChevronRight,
   Clock,
   Minus,
   Palette,
   Plus,
   Repeat,
+  ShieldAlert,
   Timer,
   Volume2,
   VolumeX,
@@ -63,6 +65,9 @@ interface TimerSettingsProps {
   setTimerMode: (mode: "timer" | "stopwatch") => void;
   strictMode: boolean;
   setStrictMode: (enabled: boolean) => void;
+  onOpenAppBlocking?: () => void;
+  appBlockingEnabled?: boolean;
+  blockedAppsCount?: number;
 }
 
 const THEMES: { id: ThemeColor; name: string; color: string }[] = [
@@ -113,6 +118,9 @@ export default function TimerSettings({
   setTimerMode,
   strictMode,
   setStrictMode,
+  onOpenAppBlocking,
+  appBlockingEnabled = false,
+  blockedAppsCount = 0,
 }: TimerSettingsProps) {
   // Helper to parse duration into hours, minutes, seconds
   const hours = Math.floor(targetDuration / 3600);
@@ -389,6 +397,65 @@ export default function TimerSettings({
                   />
                 </TouchableOpacity>
               </View>
+
+              {/* App Blocking */}
+              {onOpenAppBlocking && (
+                <TouchableOpacity
+                  onPress={onOpenAppBlocking}
+                  style={styles.settingRow}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingInfo}>
+                    <View
+                      style={[
+                        styles.iconBox,
+                        {
+                          backgroundColor: appBlockingEnabled
+                            ? activeTheme.color + "20"
+                            : "rgba(255,255,255,0.05)",
+                        },
+                      ]}
+                    >
+                      <ShieldAlert
+                        size={20}
+                        color={
+                          appBlockingEnabled
+                            ? activeTheme.color
+                            : Colors.dark.textMuted
+                        }
+                      />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={styles.settingLabel}>App Blocking</Text>
+                      <Text style={styles.settingDescription}>
+                        {appBlockingEnabled
+                          ? `${blockedAppsCount} apps blocked during focus`
+                          : "Block distracting apps while focusing"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.appBlockingBadgeRow}>
+                    {appBlockingEnabled && (
+                      <View
+                        style={[
+                          styles.activeBadge,
+                          { backgroundColor: activeTheme.color + "20" },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.activeBadgeText,
+                            { color: activeTheme.color },
+                          ]}
+                        >
+                          Active
+                        </Text>
+                      </View>
+                    )}
+                    <ChevronRight size={18} color={Colors.dark.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Custom Duration */}
@@ -984,6 +1051,22 @@ const styles = StyleSheet.create({
   },
   presetBadgeText: {
     fontSize: 13,
+    fontWeight: "600",
+  },
+
+  // App Blocking
+  appBlockingBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  activeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  activeBadgeText: {
+    fontSize: 11,
     fontWeight: "600",
   },
 });

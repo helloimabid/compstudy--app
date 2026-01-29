@@ -1,5 +1,6 @@
 import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
+import { useOTAUpdates } from "@/hooks/useOTAUpdates";
 import {
   BUCKET_ID,
   COLLECTIONS,
@@ -22,11 +23,14 @@ import {
   BookOpen,
   Camera,
   ChevronRight,
+  Download,
   ExternalLink,
   Info,
   LogOut,
   Moon,
+  RefreshCw,
   Shield,
+  ShieldBan,
   Smartphone,
   Star,
   Trash2,
@@ -60,6 +64,10 @@ const SETTINGS_KEYS = {
 export default function SettingsScreen() {
   const { user, profile, logout, refetchUser } = useAuth();
   const [uploading, setUploading] = useState(false);
+
+  // OTA Updates hook
+  const { isChecking, isDownloading, isAvailable, checkForUpdates } =
+    useOTAUpdates();
 
   // Settings state
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
@@ -368,6 +376,29 @@ export default function SettingsScreen() {
             </View>
             <ChevronRight size={20} color={Colors.dark.textMuted} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push("/app-blocking")}
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: "rgba(239, 68, 68, 0.15)" },
+                ]}
+              >
+                <ShieldBan size={18} color="#ef4444" />
+              </View>
+              <View style={styles.rowTextContainer}>
+                <Text style={styles.rowText}>App Blocking</Text>
+                <Text style={styles.rowSubtext}>
+                  Block distracting apps during focus time
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={Colors.dark.textMuted} />
+          </TouchableOpacity>
         </View>
 
         {/* App Preferences */}
@@ -553,6 +584,52 @@ export default function SettingsScreen() {
               <Smartphone size={14} color={Colors.dark.textMuted} />
             </View>
           </View>
+
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => checkForUpdates(true)}
+            disabled={isChecking || isDownloading}
+          >
+            <View style={styles.rowLeft}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  {
+                    backgroundColor: isAvailable
+                      ? "rgba(34, 197, 94, 0.15)"
+                      : "rgba(59, 130, 246, 0.15)",
+                  },
+                ]}
+              >
+                {isChecking || isDownloading ? (
+                  <RefreshCw size={18} color="#3b82f6" />
+                ) : isAvailable ? (
+                  <Download size={18} color="#22c55e" />
+                ) : (
+                  <RefreshCw size={18} color="#3b82f6" />
+                )}
+              </View>
+              <View style={styles.rowTextContainer}>
+                <Text style={styles.rowText}>
+                  {isChecking
+                    ? "Checking..."
+                    : isDownloading
+                      ? "Downloading..."
+                      : isAvailable
+                        ? "Update Available"
+                        : "Check for Updates"}
+                </Text>
+                <Text style={styles.rowSubtext}>
+                  {isAvailable
+                    ? "Tap to download and install"
+                    : "Get the latest features & fixes"}
+                </Text>
+              </View>
+            </View>
+            {(isChecking || isDownloading) && (
+              <ActivityIndicator size="small" color={Colors.dark.primary} />
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Data & Storage */}

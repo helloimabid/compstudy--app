@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "compstudy",
+    "name": "CompStudy",
     "slug": "compstudy",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "appwrite-callback-6955d513000fca8bf0d3",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.compstudy.compstudy"
     },
     "android": {
       "adaptiveIcon": {
@@ -78,7 +79,10 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/b8a1785f-2be9-4b89-bb99-85d4d12e5557"
+      "url": "https://u.expo.dev/b8a1785f-2be9-4b89-bb99-85d4d12e5557",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 30000
     }
   }
 }

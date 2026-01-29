@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/Colors";
+import { useAppBlocking } from "@/hooks/useAppBlocking";
 import { useStrictMode } from "@/hooks/useStrictMode";
 import { COLLECTIONS, databases, DB_ID, Query } from "@/lib/appwrite";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,7 +29,9 @@ import {
   View,
 } from "react-native";
 import { ID, Permission, Role } from "react-native-appwrite";
+import AppBlockingSettingsModal from "./AppBlockingSettings";
 import { useAuth } from "./AppwriteProvider";
+import BlockingOverlay from "./BlockingOverlay";
 import SessionDesigner from "./SessionDesigner";
 import {
   CircularTimerDisplay,
@@ -71,6 +74,7 @@ export default function NativeStudyTimer() {
   const [showDesigner, setShowDesigner] = useState(false);
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
+  const [showAppBlockingSettings, setShowAppBlockingSettings] = useState(false);
   const [themeColor, setThemeColor] = useState<ThemeColor>("indigo");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [visualMode, setVisualMode] = useState<VisualMode>("grid");
@@ -99,6 +103,38 @@ export default function NativeStudyTimer() {
       resetTimer();
     },
   );
+
+  // App Blocking Hook
+  const {
+    settings: appBlockingSettings,
+    isBlocking,
+    showBlockOverlay,
+    dismissOverlay,
+    updateSettings: updateAppBlockingSettings,
+    toggleApp,
+    selectCategory,
+    openSystemFocusSettings,
+    violationStats,
+    violationCount,
+  } = useAppBlocking({
+    timerState,
+    isTimerRunning: isActive && !isPaused,
+    onViolation: () => {
+      // Optional callback when user leaves during focus
+      console.log("User left during focus session");
+    },
+  });
+
+  // Get theme color for UI
+  const THEME_COLORS: Record<ThemeColor, string> = {
+    indigo: "#6366f1",
+    cyan: "#06b6d4",
+    green: "#22c55e",
+    amber: "#f59e0b",
+    rose: "#f43f5e",
+    violet: "#8b5cf6",
+  };
+  const activeThemeColor = THEME_COLORS[themeColor] || THEME_COLORS.indigo;
 
   // Load Settings
   useEffect(() => {
@@ -1380,6 +1416,34 @@ export default function NativeStudyTimer() {
             resetTimer();
           }
         }}
+        onOpenAppBlocking={() => {
+          setShowSettings(false);
+          setTimeout(() => setShowAppBlockingSettings(true), 300);
+        }}
+        appBlockingEnabled={appBlockingSettings.enabled}
+        blockedAppsCount={appBlockingSettings.blockedApps.length}
+      />
+
+      {/* App Blocking Settings Modal */}
+      <AppBlockingSettingsModal
+        isOpen={showAppBlockingSettings}
+        onClose={() => setShowAppBlockingSettings(false)}
+        settings={appBlockingSettings}
+        onUpdateSettings={updateAppBlockingSettings}
+        onToggleApp={toggleApp}
+        onSelectCategory={selectCategory}
+        onOpenSystemSettings={openSystemFocusSettings}
+        themeColor={activeThemeColor}
+        violationStats={violationStats}
+      />
+
+      {/* Blocking Overlay - Shows when returning from distraction */}
+      <BlockingOverlay
+        visible={showBlockOverlay}
+        onDismiss={dismissOverlay}
+        themeColor={activeThemeColor}
+        violationCount={violationStats.today}
+        message={appBlockingSettings.warningMessage}
       />
 
       {/* Strict Mode Overlay - Blocks internal navigation */}
