@@ -1,9 +1,10 @@
 const {
   withAndroidManifest,
-  withMainActivity,
+  withMainApplication,
+  withDangerousMod,
   AndroidConfig,
 } = require("@expo/config-plugins");
-const { mkdirSync, writeFileSync, existsSync } = require("fs");
+const { mkdirSync, writeFileSync, existsSync, readFileSync } = require("fs");
 const { join } = require("path");
 
 // Kotlin code for the AppBlockingModule
@@ -547,70 +548,92 @@ function withAppBlockingAndroid(config) {
   return config;
 }
 
-function withAppBlockingFiles(config) {
-  return {
-    ...config,
-    mods: {
-      ...config.mods,
-      android: {
-        ...config.mods?.android,
-        dangerous: [
-          ...(config.mods?.android?.dangerous || []),
-          async (config) => {
-            const projectRoot = config.modRequest.projectRoot;
-            const packageName =
-              config.android?.package || "com.compstudy.compstudy";
-            const packagePath = packageName.replace(/\./g, "/");
-
-            // Create directories
-            const kotlinDir = join(
-              projectRoot,
-              "android/app/src/main/java",
-              packagePath,
-              "appblocking",
-            );
-            const layoutDir = join(
-              projectRoot,
-              "android/app/src/main/res/layout",
-            );
-
-            if (!existsSync(kotlinDir)) {
-              mkdirSync(kotlinDir, { recursive: true });
-            }
-            if (!existsSync(layoutDir)) {
-              mkdirSync(layoutDir, { recursive: true });
-            }
-
-            // Write Kotlin files
-            writeFileSync(
-              join(kotlinDir, "AppBlockingModule.kt"),
-              APP_BLOCKING_MODULE_KT,
-            );
-            writeFileSync(
-              join(kotlinDir, "AppBlockingService.kt"),
-              APP_BLOCKING_SERVICE_KT,
-            );
-            writeFileSync(
-              join(kotlinDir, "AppBlockingPackage.kt"),
-              APP_BLOCKING_PACKAGE_KT,
-            );
-
-            // Write layout XML
-            writeFileSync(
-              join(layoutDir, "blocking_overlay.xml"),
-              BLOCKING_OVERLAY_XML,
-            );
-
-            return config;
-          },
-        ],
-      },
-    },
-  };
-}
-
 module.exports = function withAppBlocking(config) {
   config = withAppBlockingAndroid(config);
-  // Note: File writing happens during prebuild
+  
+  // Use withDangerousMod to write the Kotlin files and modify MainApplication
+  config = withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const projectRoot = config.modRequest.projectRoot;
+      const packageName = config.android?.package || "com.compstudy.compstudy";
+      const packagePath = packageName.replace(/\./g, "/");
+
+      // Create directories
+      const kotlinDir = join(
+        projectRoot,
+        "android/app/src/main/java",
+        packagePath,
+        "appblocking"
+      );
+      const layoutDir = join(
+        projectRoot,
+        "android/app/src/main/res/layout"
+      );
+
+      if (!existsSync(kotlinDir)) {
+        mkdirSync(kotlinDir, { recursive: true });
+      }
+      if (!existsSync(layoutDir)) {
+        mkdirSync(layoutDir, { recursive: true });
+      }
+
+      // Write Kotlin files
+      writeFileSync(
+        join(kotlinDir, "AppBlockingModule.kt"),
+        APP_BLOCKING_MODULE_KT
+      );
+      writeFileSync(
+        join(kotlinDir, "AppBlockingService.kt"),
+        APP_BLOCKING_SERVICE_KT
+      );
+      writeFileSync(
+        join(kotlinDir, "AppBlockingPackage.kt"),
+        APP_BLOCKING_PACKAGE_KT
+      );
+
+      // Write layout XML
+      writeFileSync(
+        join(layoutDir, "blocking_overlay.xml"),
+        BLOCKING_OVERLAY_XML
+      );
+
+      // Modify MainApplication.kt to register the package
+      const mainAppPath = join(
+        projectRoot,
+        "android/app/src/main/java",
+        packagePath,
+        "MainApplication.kt"
+      );
+
+      if (existsSync(mainAppPath)) {
+        let mainAppContent = readFileSync(mainAppPath, 'utf-8');
+
+        // Add import if not present
+        const importStatement = `import ${packageName}.appblocking.AppBlockingPackage`;
+        if (!mainAppContent.includes(importStatement)) {
+          // Add import after the package declaration
+          mainAppContent = mainAppContent.replace(
+            /^(package .+\n)/m,
+            `$1\n${importStatement}\n`
+          );
+        }
+
+        // Add the package to getPackages() if not present
+        if (!mainAppContent.includes('add(AppBlockingPackage())')) {
+          // Find the getPackages function and add the package
+          mainAppContent = mainAppContent.replace(
+            /PackageList\(this\)\.packages\.apply\s*\{/,
+            `PackageList(this).packages.apply {\n              // Add native app blocking module\n              add(AppBlockingPackage())`
+          );
+        }
+
+        writeFileSync(mainAppPath, mainAppContent);
+      }
+
+      return config;
+    },
+  ]);
+
   return config;
 };

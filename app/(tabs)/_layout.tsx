@@ -1,4 +1,5 @@
 import { CustomDrawerContent } from "@/components/CustomDrawer";
+import { UserSearchModal } from "@/components/UserSearchModal";
 import { Colors } from "@/constants/Colors";
 import { SpacedRepetitionProvider } from "@/context/SpacedRepetitionContext";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
@@ -11,10 +12,12 @@ import {
   Heart,
   Home,
   Menu,
+  Search,
   Settings,
   Trophy,
 } from "lucide-react-native";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function MenuButton() {
@@ -26,6 +29,28 @@ function MenuButton() {
     >
       <Menu size={24} color={Colors.dark.text} />
     </TouchableOpacity>
+  );
+}
+
+function SearchButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.searchButton}>
+      <Search size={22} color={Colors.dark.text} />
+    </TouchableOpacity>
+  );
+}
+
+function HeaderButtons({ onSearchPress }: { onSearchPress: () => void }) {
+  const navigation = useNavigation();
+  return (
+    <View style={styles.headerLeft}>
+      <TouchableOpacity
+        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+        style={styles.menuButton}
+      >
+        <Menu size={24} color={Colors.dark.text} />
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -62,13 +87,23 @@ const screenOptions = {
   },
 };
 
+const getScreenOptions = (onSearchPress: () => void) => ({
+  ...screenOptions,
+  headerRight: () => <SearchButton onPress={onSearchPress} />,
+});
+
 export default function DrawerLayout() {
+  const [searchVisible, setSearchVisible] = useState(false);
+
+  const openSearch = () => setSearchVisible(true);
+  const closeSearch = () => setSearchVisible(false);
+
   return (
     <SpacedRepetitionProvider>
       <GestureHandlerRootView style={styles.container}>
         <Drawer
           drawerContent={(props) => <CustomDrawerContent {...props} />}
-          screenOptions={screenOptions}
+          screenOptions={getScreenOptions(openSearch)}
         >
           <Drawer.Screen
             name="index"
@@ -159,6 +194,7 @@ export default function DrawerLayout() {
             }}
           />
         </Drawer>
+        <UserSearchModal visible={searchVisible} onClose={closeSearch} />
       </GestureHandlerRootView>
     </SpacedRepetitionProvider>
   );
@@ -171,5 +207,13 @@ const styles = StyleSheet.create({
   menuButton: {
     marginLeft: 16,
     padding: 8,
+  },
+  searchButton: {
+    marginRight: 16,
+    padding: 8,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

@@ -39,6 +39,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/withAppBlocking.js",
       ["expo-notifications"],
       [
         "expo-router",
