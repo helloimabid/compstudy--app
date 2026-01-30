@@ -29,7 +29,8 @@ interface UserSearchModalProps {
 }
 
 export function UserSearchModal({ visible, onClose }: UserSearchModalProps) {
-  const { query, setQuery, results, loading, error, clearSearch } = useUserSearch();
+  const { query, setQuery, results, loading, error, clearSearch } =
+    useUserSearch();
   const inputRef = useRef<TextInput>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
@@ -127,7 +128,9 @@ export function UserSearchModal({ visible, onClose }: UserSearchModalProps) {
     if (query.length > 0 && query.length < 2) {
       return (
         <View style={styles.messageContainer}>
-          <Text style={styles.messageText}>Type at least 2 characters to search</Text>
+          <Text style={styles.messageText}>
+            Type at least 2 characters to search
+          </Text>
         </View>
       );
     }
@@ -188,7 +191,7 @@ export function UserSearchModal({ visible, onClose }: UserSearchModalProps) {
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
           <Pressable style={styles.backdrop} onPress={handleClose} />
-          
+
           <Animated.View
             style={[
               styles.container,
@@ -197,7 +200,11 @@ export function UserSearchModal({ visible, onClose }: UserSearchModalProps) {
           >
             {/* Search Input */}
             <View style={styles.searchInputContainer}>
-              <Search size={20} color={Colors.dark.textMuted} style={styles.searchIcon} />
+              <Search
+                size={20}
+                color={Colors.dark.textMuted}
+                style={styles.searchIcon}
+              />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
@@ -211,11 +218,17 @@ export function UserSearchModal({ visible, onClose }: UserSearchModalProps) {
                 selectionColor={Colors.dark.primary}
               />
               {query.length > 0 && (
-                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <TouchableOpacity
+                  onPress={clearSearch}
+                  style={styles.clearButton}
+                >
                   <X size={18} color={Colors.dark.textMuted} />
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={handleClose} style={styles.cancelButton}>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={styles.cancelButton}
+              >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>

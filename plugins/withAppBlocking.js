@@ -550,10 +550,10 @@ function withAppBlockingAndroid(config) {
 
 module.exports = function withAppBlocking(config) {
   config = withAppBlockingAndroid(config);
-  
+
   // Use withDangerousMod to write the Kotlin files and modify MainApplication
   config = withDangerousMod(config, [
-    'android',
+    "android",
     async (config) => {
       const projectRoot = config.modRequest.projectRoot;
       const packageName = config.android?.package || "com.compstudy.compstudy";
@@ -564,12 +564,9 @@ module.exports = function withAppBlocking(config) {
         projectRoot,
         "android/app/src/main/java",
         packagePath,
-        "appblocking"
+        "appblocking",
       );
-      const layoutDir = join(
-        projectRoot,
-        "android/app/src/main/res/layout"
-      );
+      const layoutDir = join(projectRoot, "android/app/src/main/res/layout");
 
       if (!existsSync(kotlinDir)) {
         mkdirSync(kotlinDir, { recursive: true });
@@ -581,21 +578,21 @@ module.exports = function withAppBlocking(config) {
       // Write Kotlin files
       writeFileSync(
         join(kotlinDir, "AppBlockingModule.kt"),
-        APP_BLOCKING_MODULE_KT
+        APP_BLOCKING_MODULE_KT,
       );
       writeFileSync(
         join(kotlinDir, "AppBlockingService.kt"),
-        APP_BLOCKING_SERVICE_KT
+        APP_BLOCKING_SERVICE_KT,
       );
       writeFileSync(
         join(kotlinDir, "AppBlockingPackage.kt"),
-        APP_BLOCKING_PACKAGE_KT
+        APP_BLOCKING_PACKAGE_KT,
       );
 
       // Write layout XML
       writeFileSync(
         join(layoutDir, "blocking_overlay.xml"),
-        BLOCKING_OVERLAY_XML
+        BLOCKING_OVERLAY_XML,
       );
 
       // Modify MainApplication.kt to register the package
@@ -603,11 +600,11 @@ module.exports = function withAppBlocking(config) {
         projectRoot,
         "android/app/src/main/java",
         packagePath,
-        "MainApplication.kt"
+        "MainApplication.kt",
       );
 
       if (existsSync(mainAppPath)) {
-        let mainAppContent = readFileSync(mainAppPath, 'utf-8');
+        let mainAppContent = readFileSync(mainAppPath, "utf-8");
 
         // Add import if not present
         const importStatement = `import ${packageName}.appblocking.AppBlockingPackage`;
@@ -615,16 +612,16 @@ module.exports = function withAppBlocking(config) {
           // Add import after the package declaration
           mainAppContent = mainAppContent.replace(
             /^(package .+\n)/m,
-            `$1\n${importStatement}\n`
+            `$1\n${importStatement}\n`,
           );
         }
 
         // Add the package to getPackages() if not present
-        if (!mainAppContent.includes('add(AppBlockingPackage())')) {
+        if (!mainAppContent.includes("add(AppBlockingPackage())")) {
           // Find the getPackages function and add the package
           mainAppContent = mainAppContent.replace(
             /PackageList\(this\)\.packages\.apply\s*\{/,
-            `PackageList(this).packages.apply {\n              // Add native app blocking module\n              add(AppBlockingPackage())`
+            `PackageList(this).packages.apply {\n              // Add native app blocking module\n              add(AppBlockingPackage())`,
           );
         }
 
