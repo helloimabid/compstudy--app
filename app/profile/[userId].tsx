@@ -1,5 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { BUCKET_ID, COLLECTIONS, databases, DB_ID, storage } from "@/lib/appwrite";
+import { DayResetHour, getLogicalDateLabel } from "@/utils/dayBoundary";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock, Flame, Zap } from "lucide-react-native";
@@ -26,6 +27,7 @@ interface Profile {
     totalHours: number;
     streak: number;
     xp: number;
+    dayResetHour?: number;
 }
 
 interface StudySession {
@@ -203,10 +205,11 @@ export default function ProfileScreen() {
                                     </Text>
                                 </View>
                                 <Text style={styles.sessionTime}>
-                                    {new Date(session.endTime).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                    })}
+                                    {getLogicalDateLabel(
+                                        (profile?.dayResetHour ?? 0) as DayResetHour,
+                                        new Date(session.endTime),
+                                        { month: "short", day: "numeric" }
+                                    )}
                                 </Text>
                             </View>
                         ))

@@ -1,6 +1,7 @@
 import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
 import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
+import { DayResetHour, getLogicalDateLabel } from "@/utils/dayBoundary";
 import { LinearGradient } from "expo-linear-gradient";
 import { BarChart2, Calendar, ChevronRight, Clock, Flame, Target, TrendingUp, Zap } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -121,9 +122,13 @@ export default function StatsScreen() {
         const totalSeconds = personalSessions.reduce((acc, session) => acc + (session.duration || 0), 0);
         const totalHours = (totalSeconds / 3600).toFixed(1);
 
-        // Group by day for the trend list
+        // Get day reset hour from profile (Night Owl Mode)
+        const dayResetHour = (profile?.dayResetHour ?? 0) as DayResetHour;
+
+        // Group by day for the trend list, using logical day boundaries
         const sessionsByDay = personalSessions.reduce((acc: any, session) => {
-            const date = new Date(session.endTime).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+            const sessionDate = new Date(session.endTime);
+            const date = getLogicalDateLabel(dayResetHour, sessionDate, { weekday: 'short', day: 'numeric' });
             acc[date] = (acc[date] || 0) + (session.duration || 0) / 3600;
             return acc;
         }, {});
@@ -360,7 +365,13 @@ export default function StatsScreen() {
                                         </View>
                                         <View style={styles.activityInfo}>
                                             <Text style={styles.activitySubject}>{session.subject || "Study Session"}</Text>
-                                            <Text style={styles.activityDuration}>{Math.floor(session.duration / 60)}m • {new Date(session.endTime).toLocaleDateString()}</Text>
+                                            <Text style={styles.activityDuration}>
+                                                {Math.floor(session.duration / 60)}m • {getLogicalDateLabel(
+                                                    (profile?.dayResetHour ?? 0) as DayResetHour,
+                                                    new Date(session.endTime),
+                                                    { month: 'short', day: 'numeric' }
+                                                )}
+                                            </Text>
                                         </View>
                                         <ChevronRight size={16} color={Colors.dark.textMuted} />
                                     </View>

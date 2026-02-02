@@ -1,6 +1,7 @@
 import { useAuth } from "@/components/AppwriteProvider";
 import { Colors } from "@/constants/Colors";
 import { COLLECTIONS, databases, DB_ID } from "@/lib/appwrite";
+import { DayResetHour, getLogicalDateLabel } from "@/utils/dayBoundary";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
@@ -565,10 +566,11 @@ export default function HomeScreen() {
                     </View>
                   </View>
                   <Text style={styles.activityTime}>
-                    {new Date(session.endTime).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {getLogicalDateLabel(
+                      (profile?.dayResetHour ?? 0) as DayResetHour,
+                      new Date(session.endTime),
+                      { month: "short", day: "numeric" }
+                    )}
                   </Text>
                 </View>
               ))}

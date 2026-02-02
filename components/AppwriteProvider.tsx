@@ -138,6 +138,7 @@ export function AppwriteProvider({ children }: { children: ReactNode }) {
           totalHours: 0.0,
           streak: 0,
           xp: 0,
+          dayResetHour: 0, // Night owl mode: 0 = midnight (default)
           ...(profilePicture && { profilePicture }),
         },
         [

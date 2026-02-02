@@ -1,4 +1,5 @@
 import { useAuth } from "@/components/AppwriteProvider";
+import NightOwlSettings from "@/components/NightOwlSettings";
 import { Colors } from "@/constants/Colors";
 import { useOTAUpdates } from "@/hooks/useOTAUpdates";
 import {
@@ -9,6 +10,7 @@ import {
   ID,
   storage,
 } from "@/lib/appwrite";
+import { DayResetHour } from "@/utils/dayBoundary";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
@@ -74,6 +76,9 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [keepScreenAwake, setKeepScreenAwake] = useState(true);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [dayResetHour, setDayResetHour] = useState<DayResetHour>(
+    (profile?.dayResetHour as DayResetHour) ?? 0
+  );
 
   // Load saved settings on mount
   useEffect(() => {
@@ -399,6 +404,19 @@ export default function SettingsScreen() {
             </View>
             <ChevronRight size={20} color={Colors.dark.textMuted} />
           </TouchableOpacity>
+
+          {/* Night Owl Mode */}
+          {profile && (
+            <NightOwlSettings
+              profileId={profile.$id}
+              currentValue={dayResetHour}
+              onUpdate={(newValue) => {
+                setDayResetHour(newValue);
+                refetchUser();
+              }}
+              hapticsEnabled={hapticsEnabled}
+            />
+          )}
         </View>
 
         {/* App Preferences */}
