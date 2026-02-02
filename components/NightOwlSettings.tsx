@@ -6,7 +6,7 @@ import {
   getResetHourShortLabel,
 } from "@/utils/dayBoundary";
 import * as Haptics from "expo-haptics";
-import { Moon, ChevronDown, Check } from "lucide-react-native";
+import { Check, ChevronDown, Moon } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -34,13 +34,14 @@ export default function NightOwlSettings({
 }: NightOwlSettingsProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<DayResetHour>(currentValue);
+  const [selectedValue, setSelectedValue] =
+    useState<DayResetHour>(currentValue);
 
   const handleSelect = async (value: DayResetHour) => {
     if (hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setSelectedValue(value);
     setIsSaving(true);
 
@@ -48,10 +49,10 @@ export default function NightOwlSettings({
       await databases.updateDocument(DB_ID, COLLECTIONS.PROFILES, profileId, {
         dayResetHour: value,
       });
-      
+
       onUpdate(value);
       setIsPickerOpen(false);
-      
+
       if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -64,7 +65,9 @@ export default function NightOwlSettings({
     }
   };
 
-  const currentOption = DAY_RESET_OPTIONS.find(opt => opt.value === currentValue);
+  const currentOption = DAY_RESET_OPTIONS.find(
+    (opt) => opt.value === currentValue,
+  );
 
   return (
     <>
@@ -96,11 +99,14 @@ export default function NightOwlSettings({
         transparent={true}
         onRequestClose={() => setIsPickerOpen(false)}
       >
-        <Pressable 
+        <Pressable
           style={styles.modalOverlay}
           onPress={() => setIsPickerOpen(false)}
         >
-          <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
+          <Pressable
+            style={styles.modalContent}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Day Reset Time</Text>
               <TouchableOpacity
@@ -131,7 +137,8 @@ export default function NightOwlSettings({
                     <Text
                       style={[
                         styles.optionLabel,
-                        selectedValue === option.value && styles.optionLabelSelected,
+                        selectedValue === option.value &&
+                          styles.optionLabelSelected,
                       ]}
                     >
                       {option.label}
@@ -143,13 +150,15 @@ export default function NightOwlSettings({
                       <Text style={styles.optionHint}>Popular</Text>
                     )}
                   </View>
-                  {selectedValue === option.value && (
-                    isSaving ? (
-                      <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  {selectedValue === option.value &&
+                    (isSaving ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={Colors.dark.primary}
+                      />
                     ) : (
                       <Check size={20} color={Colors.dark.primary} />
-                    )
-                  )}
+                    ))}
                 </TouchableOpacity>
               ))}
             </View>
@@ -157,8 +166,9 @@ export default function NightOwlSettings({
             <View style={styles.exampleContainer}>
               <Text style={styles.exampleTitle}>Example:</Text>
               <Text style={styles.exampleText}>
-                If you set it to {getResetHourShortLabel(selectedValue)}, studying at 2 AM on
-                January 2nd will count as January {selectedValue > 2 ? "1st" : "2nd"}'s study time.
+                If you set it to {getResetHourShortLabel(selectedValue)},
+                studying at 2 AM on January 2nd will count as January{" "}
+                {selectedValue > 2 ? "1st" : "2nd"}'s study time.
               </Text>
             </View>
           </Pressable>

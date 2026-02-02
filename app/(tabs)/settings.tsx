@@ -77,7 +77,7 @@ export default function SettingsScreen() {
   const [keepScreenAwake, setKeepScreenAwake] = useState(true);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [dayResetHour, setDayResetHour] = useState<DayResetHour>(
-    (profile?.dayResetHour as DayResetHour) ?? 0
+    (profile?.dayResetHour as DayResetHour) ?? 0,
   );
 
   // Load saved settings on mount

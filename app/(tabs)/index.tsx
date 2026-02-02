@@ -569,7 +569,7 @@ export default function HomeScreen() {
                     {getLogicalDateLabel(
                       (profile?.dayResetHour ?? 0) as DayResetHour,
                       new Date(session.endTime),
-                      { month: "short", day: "numeric" }
+                      { month: "short", day: "numeric" },
                     )}
                   </Text>
                 </View>
